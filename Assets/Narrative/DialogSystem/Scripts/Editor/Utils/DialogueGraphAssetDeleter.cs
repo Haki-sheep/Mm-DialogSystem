@@ -6,12 +6,12 @@ using UnityEngine;
 namespace Miemie.DialogSystem.Editor
 {
     /// <summary>
-    /// 对话图与节点资产删除
+    /// 对话图与节点删除
     /// </summary>
     static class DialogueGraphAssetDeleter
     {
         /// <summary>
-        /// 删除整张对话图及其全部节点
+        /// 删除整张对话图
         /// </summary>
         public static bool TryDeleteGraph(DialogueGraph graph)
         {
@@ -27,10 +27,6 @@ namespace Miemie.DialogSystem.Editor
                     "取消"))
                 return false;
 
-            var nodes = graph.NodeList != null ? new List<DialogueNode>(graph.NodeList) : new List<DialogueNode>();
-            foreach (var node in nodes)
-                DeleteNodeInternal(node, graph, clearReferences: false);
-
             DialogueGraphLayoutStore.RemoveGraph(graph);
 
             string graphPath = AssetDatabase.GetAssetPath(graph);
@@ -43,50 +39,37 @@ namespace Miemie.DialogSystem.Editor
         }
 
         /// <summary>
-        /// 删除单个节点资产
+        /// 删除图内单个节点
         /// </summary>
-        public static bool TryDeleteNode(DialogueNode node)
+        public static bool TryDeleteNode(DialogueGraph graph, DialogueNode node)
         {
-            if (!node)
+            if (graph == null || node == null)
                 return false;
 
-            string nodeName = node.name;
             int nodeId = node.NodeId;
-            var graph = FindGraphForNode(node);
             if (!EditorUtility.DisplayDialog(
                     "删除节点",
-                    $"确定删除节点「{nodeName}」[{nodeId}] 吗\n此操作不可撤销",
+                    $"确定删除节点 [{nodeId}] {node.SpeakerName} 吗\n此操作不可撤销",
                     "删除",
                     "取消"))
                 return false;
 
-            DeleteNodeInternal(node, graph, clearReferences: true);
+            DeleteNodeInternal(graph, node);
             AssetDatabase.SaveAssets();
-            Debug.Log($"已删除节点: {nodeName}");
+            Debug.Log($"已删除节点: [{nodeId}]");
             return true;
         }
 
-        static void DeleteNodeInternal(DialogueNode node, DialogueGraph graph, bool clearReferences)
+        static void DeleteNodeInternal(DialogueGraph graph, DialogueNode node)
         {
-            if (node == null)
-                return;
+            ClearReferencesToNode(graph, node);
 
-            if (graph != null)
-            {
-                if (clearReferences)
-                    ClearReferencesToNode(graph, node);
+            if (graph.StartNodeId == node.NodeId)
+                graph.SetStartNodeInEditorWindow(null);
 
-                if (graph.StartNode == node)
-                    graph.SetStartNodeInEditorWindow(null);
-
-                graph.RemoveNode(node);
-                DialogueGraphLayoutStore.RemoveNode(graph, node);
-                EditorUtility.SetDirty(graph);
-            }
-
-            string path = AssetDatabase.GetAssetPath(node);
-            if (!string.IsNullOrEmpty(path))
-                AssetDatabase.DeleteAsset(path);
+            graph.RemoveNode(node);
+            DialogueGraphLayoutStore.RemoveNode(graph, node);
+            EditorUtility.SetDirty(graph);
         }
 
         static void ClearReferencesToNode(DialogueGraph graph, DialogueNode target)
@@ -99,7 +82,7 @@ namespace Miemie.DialogSystem.Editor
                 if (node == null || node == target)
                     continue;
 
-                if (node.NextTransition?.toNode == target)
+                if (node.NextTransition?.toNodeId == target.NodeId)
                     node.ClearNextNode();
 
                 if (node.ChoiceList == null)
@@ -107,24 +90,10 @@ namespace Miemie.DialogSystem.Editor
 
                 foreach (var choice in node.ChoiceList)
                 {
-                    if (choice != null && choice.toNode == target)
-                        choice.toNode = null;
+                    if (choice != null && choice.toNodeId == target.NodeId)
+                        choice.toNodeId = 0;
                 }
-
-                EditorUtility.SetDirty(node);
             }
-        }
-
-        static DialogueGraph FindGraphForNode(DialogueNode node)
-        {
-            foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(DialogueGraph)}"))
-            {
-                var graph = AssetDatabase.LoadAssetAtPath<DialogueGraph>(AssetDatabase.GUIDToAssetPath(guid));
-                if (graph?.NodeList != null && graph.NodeList.Contains(node))
-                    return graph;
-            }
-
-            return null;
         }
     }
 }

@@ -95,15 +95,6 @@ namespace Miemie.DialogSystem.Editor
             if (EditorUtility.IsDirty(graph))
                 return true;
 
-            if (graph.NodeList != null)
-            {
-                foreach (var node in graph.NodeList)
-                {
-                    if (node != null && EditorUtility.IsDirty(node))
-                        return true;
-                }
-            }
-
             return DialogueGraphLayoutStore.IsDatabaseDirty();
         }
 
@@ -115,6 +106,8 @@ namespace Miemie.DialogSystem.Editor
             if (!HasUnsavedChanges())
                 return false;
 
+            graphView?.SaveAllLayouts();
+            DialogueGraphLayoutStore.SaveDatabaseAssets();
             AssetDatabase.SaveAssets();
             Repaint();
             return true;

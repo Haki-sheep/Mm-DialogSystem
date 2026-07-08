@@ -11,7 +11,7 @@ namespace Miemie.DialogSystem.Editor
     {
         public static void Draw(DialogueTransitionHandle handle)
         {
-            if (handle?.sourceNode == null)
+            if (handle?.sourceNode == null || handle.graph == null)
             {
                 EditorGUILayout.LabelField("未选中连线");
                 return;
@@ -32,21 +32,27 @@ namespace Miemie.DialogSystem.Editor
 
             EditorGUILayout.Space(4);
 
-            var sourceSo = new SerializedObject(handle.sourceNode);
-            sourceSo.Update();
+            var nodeProp = DialogueNodeEditorUtility.FindNodeProperty(handle.graph, handle.sourceNode, out var graphSo);
+            if (nodeProp == null)
+            {
+                EditorGUILayout.HelpBox("找不到节点序列化数据", MessageType.Warning);
+                return;
+            }
+
+            graphSo.Update();
 
             if (handle.IsOptionTransition)
-                DrawOptionTransition(handle, sourceSo);
+                DrawOptionTransition(handle, nodeProp);
             else
-                DrawLinearTransition(handle, sourceSo);
+                DrawLinearTransition(handle, nodeProp);
 
-            sourceSo.ApplyModifiedProperties();
-            EditorUtility.SetDirty(handle.sourceNode);
+            graphSo.ApplyModifiedProperties();
+            EditorUtility.SetDirty(handle.graph);
         }
 
-        static void DrawLinearTransition(DialogueTransitionHandle handle, SerializedObject sourceSo)
+        static void DrawLinearTransition(DialogueTransitionHandle handle, SerializedProperty nodeProp)
         {
-            var transitionProp = sourceSo.FindProperty("nextTransition");
+            var transitionProp = nodeProp.FindPropertyRelative("nextTransition");
             if (transitionProp == null)
             {
                 EditorGUILayout.HelpBox("找不到 nextTransition", MessageType.Warning);
@@ -56,9 +62,9 @@ namespace Miemie.DialogSystem.Editor
             DrawConditionsBlock(handle.graph, transitionProp.FindPropertyRelative("conditionList"), "Conditions");
         }
 
-        static void DrawOptionTransition(DialogueTransitionHandle handle, SerializedObject sourceSo)
+        static void DrawOptionTransition(DialogueTransitionHandle handle, SerializedProperty nodeProp)
         {
-            var choiceListProp = sourceSo.FindProperty("choiceList");
+            var choiceListProp = nodeProp.FindPropertyRelative("choiceList");
             int choiceIndex = FindChoiceIndex(handle.sourceNode, handle.choiceTransition);
             if (choiceIndex < 0)
             {

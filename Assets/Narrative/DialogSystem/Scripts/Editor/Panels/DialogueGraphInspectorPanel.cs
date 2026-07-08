@@ -23,16 +23,16 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            var selected = window.MenuTreeAccessor?.Selection?.SelectedValue as Object;
-            if (!DialogueGraphEditorWindow.IsAssetAlive(selected))
+            var selected = window.MenuTreeAccessor?.Selection?.SelectedValue;
+            if (selected is UnityEngine.Object obj && !DialogueGraphEditorWindow.IsAssetAlive(obj))
             {
                 window.ClearStaleSelectionInternal();
                 selected = null;
             }
 
-            GraphViewFramePanelStyles.DrawPanelHeader("属性", selected != null ? GetSelectionSubtitle(selected) : "未选中");
+            GraphViewFramePanelStyles.DrawPanelHeader("属性", selected != null ? GetSelectionSubtitle(window, selected) : "未选中");
 
-            if (!DialogueGraphEditorWindow.IsAssetAlive(selected))
+            if (selected == null)
             {
                 GraphViewFramePanelStyles.BeginPaddedContent();
                 GraphViewFramePanelStyles.DrawEmptyHint("在左侧选中 Graph 或节点以编辑属性。");
@@ -52,59 +52,71 @@ namespace Miemie.DialogSystem.Editor
             InspectorPanelShell.DrawSection("属性", "Transition", () => DialogueTransitionInspectorDrawer.Draw(window.SelectedTransition));
         }
 
-        static string GetSelectionSubtitle(Object selected)
+        static string GetSelectionSubtitle(DialogueGraphEditorWindow window, object selected)
         {
-            if (!DialogueGraphEditorWindow.IsAssetAlive(selected))
-                return "未选中";
-
-            if (selected is DialogueGraph)
+            if (selected is DialogueGraph graph && DialogueGraphEditorWindow.IsAssetAlive(graph))
                 return "Dialogue Graph";
+
             if (selected is DialogueNode node)
-                return $"Dialogue Node  ·  [{node.NodeId}] {node.SpeakerName}";
-            return selected.name;
+            {
+                var parent = window.FindGraphForNode(node);
+                if (DialogueGraphEditorWindow.IsNodeAlive(parent, node))
+                    return $"Dialogue Node  ·  [{node.NodeId}] {node.SpeakerName}";
+            }
+
+            if (selected is UnityEngine.Object obj)
+                return obj.name;
+
+            return "未选中";
         }
 
-        static void DrawSelectedObjectInspector(DialogueGraphEditorWindow window, Object selected)
+        static void DrawSelectedObjectInspector(DialogueGraphEditorWindow window, object selected)
         {
-            if (!DialogueGraphEditorWindow.IsAssetAlive(selected))
-                return;
-
-            if (window.RenameTarget != selected)
-                window.SetRenameTarget(selected, selected.name);
-
-            DrawAssetRenameField(window, selected);
-            EditorGUILayout.Space(4);
-
-            if (selected is DialogueNode node && node)
+            if (selected is DialogueGraph graph && DialogueGraphEditorWindow.IsAssetAlive(graph))
             {
-                DrawNodeInspector(window, node, selected);
+                if (window.RenameTarget != graph)
+                    window.SetRenameTarget(graph, graph.name);
+
+                DrawAssetRenameField(window, graph);
+                EditorGUILayout.Space(4);
+                DrawGraphInspector(window, graph);
+                DrawDeleteButton(window, graph);
                 return;
             }
 
-            DrawGraphInspector(window, selected);
+            if (selected is DialogueNode node)
+            {
+                var parentGraph = window.FindGraphForNode(node);
+                if (!DialogueGraphEditorWindow.IsNodeAlive(parentGraph, node))
+                    return;
+
+                DrawNodeInspector(window, parentGraph, node);
+                DrawDeleteButton(window, node);
+            }
         }
 
-        static void DrawNodeInspector(DialogueGraphEditorWindow window, DialogueNode node, Object selected)
+        static void DrawNodeInspector(DialogueGraphEditorWindow window, DialogueGraph graph, DialogueNode node)
         {
-            var so = new SerializedObject(node);
+            var nodeProp = DialogueNodeEditorUtility.FindNodeProperty(graph, node, out var graphSo);
+            if (nodeProp == null)
+                return;
+
             var scroll = window.InspectorScroll;
             scroll = EditorGUILayout.BeginScrollView(scroll);
             EditorGUI.BeginChangeCheck();
-            DialogueNodeInspectorDrawer.Draw(node, so);
+            DialogueNodeInspectorDrawer.Draw(nodeProp);
             bool changed = EditorGUI.EndChangeCheck();
             EditorGUILayout.EndScrollView();
             window.InspectorScroll = scroll;
 
-                if (node.IsOptionNode)
-                    DrawChoiceButtons(window, node);
-
-            DrawDeleteButton(window, selected);
+            if (node.IsOptionNode)
+                DrawChoiceButtons(window, node);
 
             if (!changed)
                 return;
 
-            so.ApplyModifiedProperties();
-            EditorUtility.SetDirty(node);
+            graphSo.ApplyModifiedProperties();
+            EditorUtility.SetDirty(graph);
             window.QueueGraphViewRefreshFromInspector(node);
             window.RequestMenuLabelRefreshOnly();
         }
@@ -126,8 +138,6 @@ namespace Miemie.DialogSystem.Editor
             EditorGUILayout.EndScrollView();
             window.InspectorScroll = scroll;
 
-            DrawDeleteButton(window, selected);
-
             if (!treeChanged)
                 return;
 
@@ -137,11 +147,8 @@ namespace Miemie.DialogSystem.Editor
             window.RequestMenuLabelRefreshOnly();
         }
 
-        static void DrawDeleteButton(DialogueGraphEditorWindow window, Object selected)
+        static void DrawDeleteButton(DialogueGraphEditorWindow window, object selected)
         {
-            if (!DialogueGraphEditorWindow.IsAssetAlive(selected))
-                return;
-
             if (selected is not DialogueGraph and not DialogueNode)
                 return;
 
@@ -152,7 +159,12 @@ namespace Miemie.DialogSystem.Editor
 
             string label = selected is DialogueGraph ? "删除对话图" : "删除节点";
             if (GUILayout.Button(label, GUILayout.Height(28)))
-                window.TryDeleteSelectedAsset(selected);
+            {
+                if (selected is DialogueGraph graph)
+                    window.TryDeleteSelectedAsset(graph);
+                else if (selected is DialogueNode node)
+                    window.TryDeleteSelectedAsset(node);
+            }
 
             GUI.backgroundColor = prevColor;
         }

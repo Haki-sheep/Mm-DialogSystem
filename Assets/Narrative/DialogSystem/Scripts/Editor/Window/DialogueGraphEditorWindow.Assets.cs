@@ -25,23 +25,20 @@ namespace Miemie.DialogSystem.Editor
             return null;
         }
 
-        public DialogueNode CreateNodeAsset(DialogueGraph graph)
+        /// <summary>
+        /// 在图内创建节点
+        /// </summary>
+        public DialogueNode CreateNode(DialogueGraph graph)
         {
-            DialogueEditorPaths.EnsureGraphAssetFolder();
+            if (graph == null)
+                return null;
 
-            var node = CreateInstance<DialogueNode>();
-            string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{DialogueEditorPaths.GraphAssetPath}/New Dialog Node.asset");
-            AssetDatabase.CreateAsset(node, assetPath);
-            AssetDatabase.SaveAssets();
-
-            if (graph.NodeList != null && graph.NodeList.Count > 0)
-            {
-                int maxId = graph.NodeList.Where(n => n != null).Select(n => n.NodeId).DefaultIfEmpty(0).Max();
-                var so = new SerializedObject(node);
-                so.FindProperty("nodeId").intValue = maxId + 1;
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
-
+            var node = new DialogueNode();
+            int maxId = graph.NodeList != null && graph.NodeList.Count > 0
+                ? graph.NodeList.Where(n => n != null).Select(n => n.NodeId).DefaultIfEmpty(0).Max()
+                : 0;
+            node.SetNodeId(maxId + 1);
+            node.SetSpeakerName($"节点{maxId + 1}");
             return node;
         }
 
@@ -65,16 +62,16 @@ namespace Miemie.DialogSystem.Editor
             EditorApplication.delayCall += () => SelectObjectInTree(target);
         }
 
-        internal void TryDeleteSelectedAsset(Object selected)
+        internal void TryDeleteSelectedAsset(object selected)
         {
-            if (!IsAssetAlive(selected))
-                return;
-
-            selectedTransition = null;
-            ClearInspectorTree();
-
             if (selected is DialogueGraph graph)
             {
+                if (!graph)
+                    return;
+
+                selectedTransition = null;
+                ClearInspectorTree();
+
                 if (!DialogueGraphAssetDeleter.TryDeleteGraph(graph))
                     return;
 
@@ -87,27 +84,33 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            if (selected is DialogueNode node && node)
+            if (selected is DialogueNode node)
             {
                 var parentGraph = FindGraphForNode(node);
-                if (!DialogueGraphAssetDeleter.TryDeleteNode(node))
+                if (parentGraph == null)
+                    return;
+
+                selectedTransition = null;
+                ClearInspectorTree();
+
+                if (!DialogueGraphAssetDeleter.TryDeleteNode(parentGraph, node))
                     return;
 
                 lastSyncedSelection = null;
                 ClearRenameTarget();
                 RequestMenuRefresh();
 
-                if (parentGraph != null)
+                lastSelectedGraph = parentGraph;
+                EditorApplication.delayCall += () =>
                 {
-                    lastSelectedGraph = parentGraph;
-                    EditorApplication.delayCall += () =>
-                    {
-                        SelectObjectInTree(parentGraph);
-                        graphView?.RefreshCurrentGraph(preserveView: true);
-                    };
-                }
+                    SelectObjectInTree(parentGraph);
+                    graphView?.RefreshCurrentGraph(preserveView: true);
+                };
             }
         }
+
+        internal static bool IsNodeAlive(DialogueGraph graph, DialogueNode node) =>
+            node != null && graph?.NodeList != null && graph.NodeList.Contains(node);
     }
 }
 #endif

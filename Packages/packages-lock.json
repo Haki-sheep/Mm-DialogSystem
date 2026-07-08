@@ -15,12 +15,12 @@
       "dependencies": {},
       "hash": "e5acc106ee196bc5a32fb14cdf2987b0f96d11e0"
     },
-    "com.hakisheep.mm-eventbus": {
-      "version": "git@github.com:Haki-sheep/MmCSharp-EventBus.git?path=unity",
+    "com.hakisheep.mm-mvvm": {
+      "version": "git@github.com:Haki-sheep/MmCSharp-MMVM.git?path=unity",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1fd27a407421db33b4bde2f7adbc622a2f4c39bb"
+      "hash": "09ad57af177a1d023ef75a1d3b303193dc9663c5"
     },
     "com.unity.collab-proxy": {
       "version": "2.11.4",

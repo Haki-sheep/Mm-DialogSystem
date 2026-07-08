@@ -130,7 +130,7 @@ namespace Miemie.DialogSystem.Editor
         }
 
         static string BuildNodeMenuPath(string basePath, DialogueNode node) =>
-            $"{basePath}/[{node.NodeId}] {DialogueMenuTreeUtility.SanitizeMenuPath(node.name)}";
+            $"{basePath}/[{node.NodeId}] {DialogueMenuTreeUtility.SanitizeMenuPath(node.SpeakerName)}";
 
         void RefreshMenuLabelsIfNeeded()
         {
@@ -153,7 +153,8 @@ namespace Miemie.DialogSystem.Editor
                 if (item.Value is not DialogueNode node)
                     continue;
 
-                if (!IsAssetAlive(node))
+                var parentGraph = nodeToGraph.TryGetValue(node, out var g) ? g : null;
+                if (!IsNodeAlive(parentGraph, node))
                     continue;
 
                 string newLabel = DialogueMenuTreeUtility.BuildNodeHeader(node);

@@ -21,6 +21,14 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
+            var dialogueNode = selected as DialogueNode;
+            if (dialogueNode != null && !IsNodeAlive(FindGraphForNode(dialogueNode), dialogueNode))
+            {
+                ClearStaleSelectionInternal();
+                graphView.ClearGraph();
+                return;
+            }
+
             if (ReferenceEquals(selected, lastSyncedSelection))
                 return;
 
@@ -31,9 +39,9 @@ namespace Miemie.DialogSystem.Editor
                 lastSelectedGraph = graph;
                 DialogueEditorContext.CurrentGraph = graph;
             }
-            else if (selected is DialogueNode node)
+            else if (dialogueNode != null)
             {
-                lastSelectedGraph = FindGraphForNode(node);
+                lastSelectedGraph = FindGraphForNode(dialogueNode);
                 DialogueEditorContext.CurrentGraph = lastSelectedGraph;
             }
 
@@ -61,18 +69,17 @@ namespace Miemie.DialogSystem.Editor
         /// </summary>
         public void OnNodeCreated(DialogueNode node, DialogueGraph graph)
         {
-            if (!node || graph == null)
+            if (node == null || graph == null)
                 return;
 
             selectedTransition = null;
             ClearInspectorTree();
             lastSelectedGraph = graph;
             lastSyncedSelection = null;
-            SetRenameTarget(node, node.name);
 
             EditorApplication.delayCall += () =>
             {
-                if (!node)
+                if (!IsNodeAlive(graph, node))
                     return;
 
                 ForceMenuTreeRebuild();
@@ -84,9 +91,9 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 画布点击后反向同步到左侧树
         /// </summary>
-        public void SelectObjectInTree(Object target)
+        public void SelectObjectInTree(object target)
         {
-            if (MenuTree == null || !IsAssetAlive(target))
+            if (MenuTree == null || target == null)
                 return;
 
             selectedTransition = null;
@@ -139,7 +146,7 @@ namespace Miemie.DialogSystem.Editor
             MenuTree.Selection.Clear();
         }
 
-        internal void QueueGraphViewRefreshFromInspector(Object selected)
+        internal void QueueGraphViewRefreshFromInspector(object selected)
         {
             if (graphView == null)
                 return;

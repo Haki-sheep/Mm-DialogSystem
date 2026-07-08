@@ -27,7 +27,7 @@ namespace Miemie.DialogSystem.Editor
             if (graph.NodeList == null || graph.NodeList.Count == 0)
                 sb.AppendLine("[警告] nodeList 为空");
 
-            var inGraph = new HashSet<DialogueNode>();
+            var inGraph = new HashSet<int>();
             if (graph.NodeList != null)
             {
                 foreach (var node in graph.NodeList)
@@ -37,11 +37,11 @@ namespace Miemie.DialogSystem.Editor
                         sb.AppendLine("[错误] nodeList 中有空引用");
                         continue;
                     }
-                    inGraph.Add(node);
+                    inGraph.Add(node.NodeId);
                 }
             }
 
-            if (graph.StartNode != null && !inGraph.Contains(graph.StartNode))
+            if (graph.StartNode != null && !inGraph.Contains(graph.StartNodeId))
                 sb.AppendLine("[警告] startNode 不在 nodeList 中");
 
             if (graph.NodeList != null)
@@ -50,7 +50,7 @@ namespace Miemie.DialogSystem.Editor
                 {
                     if (node == null)
                         continue;
-                    ValidateNode(node, inGraph, sb);
+                    ValidateNode(graph, node, inGraph, sb);
                 }
             }
 
@@ -58,7 +58,7 @@ namespace Miemie.DialogSystem.Editor
             Debug.Log(sb.ToString());
         }
 
-        static void ValidateNode(DialogueNode node, HashSet<DialogueNode> inGraph, StringBuilder sb)
+        static void ValidateNode(DialogueGraph graph, DialogueNode node, HashSet<int> inGraph, StringBuilder sb)
         {
             if (node.IsOptionNode)
             {
@@ -69,22 +69,22 @@ namespace Miemie.DialogSystem.Editor
             }
             else
             {
-                var next = node.NextTransition?.toNode;
-                if (next == null)
+                int nextId = node.NextTransition?.toNodeId ?? 0;
+                if (nextId == 0)
                     sb.AppendLine($"[提示] 节点 [{node.NodeId}] 无出口（可能是结局）");
-                else if (!inGraph.Contains(next))
-                    sb.AppendLine($"[警告] [{node.NodeId}] → {next.name} 不在本图 nodeList");
+                else if (!inGraph.Contains(nextId))
+                    sb.AppendLine($"[警告] [{node.NodeId}] → {nextId} 不在本图 nodeList");
             }
         }
 
-        static void ValidateChoices(DialogueNode node, HashSet<DialogueNode> inGraph, StringBuilder sb)
+        static void ValidateChoices(DialogueNode node, HashSet<int> inGraph, StringBuilder sb)
         {
             foreach (var choice in node.ChoiceList)
             {
-                if (choice?.toNode == null)
-                    sb.AppendLine($"[错误] [{node.NodeId}] 选项「{choice?.labelText}」无 toNode");
-                else if (!inGraph.Contains(choice.toNode))
-                    sb.AppendLine($"[警告] 选项 → {choice.toNode.name} 不在本图 nodeList");
+                if (choice == null || choice.toNodeId == 0)
+                    sb.AppendLine($"[错误] [{node.NodeId}] 选项「{choice?.labelText}」无 toNodeId");
+                else if (!inGraph.Contains(choice.toNodeId))
+                    sb.AppendLine($"[警告] 选项 → {choice.toNodeId} 不在本图 nodeList");
             }
         }
     }

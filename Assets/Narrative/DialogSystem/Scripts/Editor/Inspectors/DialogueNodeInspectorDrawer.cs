@@ -9,23 +9,19 @@ namespace Miemie.DialogSystem.Editor
     /// </summary>
     static class DialogueNodeInspectorDrawer
     {
-        public static void Draw(DialogueNode node, SerializedObject so)
+        public static void Draw(SerializedProperty nodeProp)
         {
-            if (node == null || so == null)
+            if (nodeProp == null)
                 return;
 
-            so.Update();
-
-            EditorGUILayout.PropertyField(so.FindProperty("nodeId"));
-            EditorGUILayout.PropertyField(so.FindProperty("speakType"));
-            EditorGUILayout.PropertyField(so.FindProperty("speakerName"));
-            EditorGUILayout.PropertyField(so.FindProperty("dialogText"));
-            EditorGUILayout.PropertyField(so.FindProperty("isOptionNode"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("nodeId"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("speakType"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("speakerName"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("dialogText"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("isOptionNode"));
 
             EditorGUILayout.Space(6);
             EditorGUILayout.HelpBox("出口连线与条件请在画布上点击连线编辑", MessageType.Info);
-
-            so.ApplyModifiedProperties();
         }
     }
 }

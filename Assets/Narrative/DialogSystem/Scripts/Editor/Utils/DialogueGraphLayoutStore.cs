@@ -6,34 +6,6 @@ using UnityEngine;
 namespace Miemie.DialogSystem.Editor
 {
     /// <summary>
-    /// 单张对话图在编辑器中的节点布局
-    /// </summary>
-    [System.Serializable]
-    class GraphLayoutEntry
-    {
-        public DialogueGraph graph;
-        public List<NodeLayoutEntry> layouts = new();
-    }
-
-    /// <summary>
-    /// 节点在 GraphView 画布上的坐标
-    /// </summary>
-    [System.Serializable]
-    class NodeLayoutEntry
-    {
-        public DialogueNode node;
-        public Vector2 position;
-    }
-
-    /// <summary>
-    /// 所有对话图的编辑器布局数据库
-    /// </summary>
-    class DialogueGraphLayoutDatabase : ScriptableObject
-    {
-        public List<GraphLayoutEntry> graphs = new();
-    }
-
-    /// <summary>
     /// 读写 GraphView 节点布局 与运行时逻辑无关
     /// </summary>
     static class DialogueGraphLayoutStore
@@ -42,23 +14,33 @@ namespace Miemie.DialogSystem.Editor
 
         static DialogueGraphLayoutDatabase database;
 
-        public static Vector2 GetPosition(DialogueGraph graph, DialogueNode node)
+        /// <summary>
+        /// 尝试读取节点坐标
+        /// </summary>
+        public static bool TryGetPosition(DialogueGraph graph, DialogueNode node, out Vector2 position)
         {
+            position = Vector2.zero;
             if (graph == null || node == null)
-                return Vector2.zero;
+                return false;
 
             var entry = GetGraphEntry(graph, create: false);
             if (entry == null)
-                return Vector2.zero;
+                return false;
 
             foreach (var layout in entry.layouts)
             {
-                if (layout.node == node)
-                    return layout.position;
+                if (layout.nodeId != node.NodeId || !layout.hasPosition)
+                    continue;
+
+                position = layout.position;
+                return true;
             }
 
-            return Vector2.zero;
+            return false;
         }
+
+        public static Vector2 GetPosition(DialogueGraph graph, DialogueNode node) =>
+            TryGetPosition(graph, node, out var position) ? position : Vector2.zero;
 
         public static void SetPosition(DialogueGraph graph, DialogueNode node, Vector2 position)
         {
@@ -68,15 +50,21 @@ namespace Miemie.DialogSystem.Editor
             var entry = GetGraphEntry(graph, create: true);
             foreach (var layout in entry.layouts)
             {
-                if (layout.node != node)
+                if (layout.nodeId != node.NodeId)
                     continue;
 
+                layout.hasPosition = true;
                 layout.position = position;
                 SaveDatabase();
                 return;
             }
 
-            entry.layouts.Add(new NodeLayoutEntry { node = node, position = position });
+            entry.layouts.Add(new NodeLayoutEntry
+            {
+                nodeId = node.NodeId,
+                hasPosition = true,
+                position = position,
+            });
             SaveDatabase();
         }
 
@@ -89,7 +77,7 @@ namespace Miemie.DialogSystem.Editor
             if (entry == null)
                 return;
 
-            entry.layouts.RemoveAll(e => e.node == node);
+            entry.layouts.RemoveAll(e => e.nodeId == node.NodeId);
             SaveDatabase();
         }
 
@@ -121,7 +109,12 @@ namespace Miemie.DialogSystem.Editor
                     if (node == null)
                         continue;
 
-                    entry.layouts.Add(new NodeLayoutEntry { node = node, position = position });
+                    entry.layouts.Add(new NodeLayoutEntry
+                    {
+                        nodeId = node.NodeId,
+                        hasPosition = true,
+                        position = position,
+                    });
                 }
             }
 
@@ -170,9 +163,6 @@ namespace Miemie.DialogSystem.Editor
             EditorUtility.SetDirty(database);
         }
 
-        /// <summary>
-        /// 布局库是否有未保存修改
-        /// </summary>
         public static bool IsDatabaseDirty()
         {
             if (database != null)
@@ -180,6 +170,18 @@ namespace Miemie.DialogSystem.Editor
 
             var db = AssetDatabase.LoadAssetAtPath<DialogueGraphLayoutDatabase>(DatabasePath);
             return db != null && EditorUtility.IsDirty(db);
+        }
+
+        public static void SaveDatabaseAssets()
+        {
+            if (database == null)
+                database = AssetDatabase.LoadAssetAtPath<DialogueGraphLayoutDatabase>(DatabasePath);
+
+            if (database == null)
+                return;
+
+            EditorUtility.SetDirty(database);
+            AssetDatabase.SaveAssetIfDirty(database);
         }
     }
 }

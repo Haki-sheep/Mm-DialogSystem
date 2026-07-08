@@ -1,6 +1,4 @@
 #if UNITY_EDITOR
-using UnityEditor;
-
 namespace Miemie.DialogSystem.Editor
 {
     /// <summary>
@@ -15,17 +13,10 @@ namespace Miemie.DialogSystem.Editor
 
             int nextIndex = (node.ChoiceList?.Count ?? 0) + 1;
             node.AddChoice(new DialogueTransition { labelText = $"选项{nextIndex}" });
-            EditorUtility.SetDirty(node);
         }
 
-        public static bool TryRemoveLastChoice(DialogueNode node)
-        {
-            if (node == null || !node.TryRemoveLastChoice())
-                return false;
-
-            EditorUtility.SetDirty(node);
-            return true;
-        }
+        public static bool TryRemoveLastChoice(DialogueNode node) =>
+            node != null && node.TryRemoveLastChoice();
     }
 }
 #endif

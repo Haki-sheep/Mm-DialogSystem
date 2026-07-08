@@ -27,7 +27,7 @@ namespace Miemie.DialogSystem.Editor
 
             title = BuildTitle();
             ApplyTitleLayout();
-            viewDataKey = node.GetInstanceID().ToString();
+            viewDataKey = $"{graph.GetInstanceID()}_{node.NodeId}";
             capabilities |= Capabilities.Selectable | Capabilities.Movable | Capabilities.Deletable;
 
             InputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(float));

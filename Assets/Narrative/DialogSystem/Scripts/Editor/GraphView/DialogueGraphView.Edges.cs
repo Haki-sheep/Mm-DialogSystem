@@ -58,7 +58,7 @@ namespace Miemie.DialogSystem.Editor
                 int portIndex = sourceView.GetOutputPortIndex(edge.output);
                 EnsureChoiceCount(sourceNode, portIndex + 1);
                 var choice = sourceNode.ChoiceList[portIndex];
-                choice.toNode = targetNode;
+                choice.toNodeId = targetNode.NodeId;
                 edge.userData = choice;
                 sourceView.SyncChoicePorts();
             }
@@ -69,7 +69,7 @@ namespace Miemie.DialogSystem.Editor
             }
 
             RegisterEdgeSelection(edge);
-            EditorUtility.SetDirty(sourceNode);
+            EditorUtility.SetDirty(currentGraph);
         }
 
         void ApplyEdgeRemove(Edge edge)
@@ -89,7 +89,7 @@ namespace Miemie.DialogSystem.Editor
                 {
                     if (!ReferenceEquals(item, choice))
                         continue;
-                    choice.toNode = null;
+                    choice.toNodeId = 0;
                     break;
                 }
                 sourceView.SyncChoicePorts();
@@ -99,7 +99,7 @@ namespace Miemie.DialogSystem.Editor
                 sourceNode.ClearNextNode();
             }
 
-            EditorUtility.SetDirty(sourceNode);
+            EditorUtility.SetDirty(currentGraph);
         }
 
         void BuildEdges()
@@ -119,9 +119,10 @@ namespace Miemie.DialogSystem.Editor
                     for (int i = 0; i < node.ChoiceList.Count; i++)
                     {
                         var choice = node.ChoiceList[i];
-                        if (choice?.toNode == null)
+                        var targetNode = choice?.ResolveToNode(currentGraph);
+                        if (targetNode == null)
                             continue;
-                        if (!nodeViews.TryGetValue(choice.toNode, out var targetView))
+                        if (!nodeViews.TryGetValue(targetNode, out var targetView))
                             continue;
 
                         var outPort = sourceView.GetOutputPort(i);
@@ -136,7 +137,7 @@ namespace Miemie.DialogSystem.Editor
                 }
                 else
                 {
-                    var next = node.NextTransition?.toNode;
+                    var next = node.NextTransition?.ResolveToNode(currentGraph);
                     if (next == null)
                         continue;
                     if (!nodeViews.TryGetValue(next, out var targetView))

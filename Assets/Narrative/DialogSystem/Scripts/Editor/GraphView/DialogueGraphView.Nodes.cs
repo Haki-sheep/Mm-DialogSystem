@@ -32,7 +32,7 @@ namespace Miemie.DialogSystem.Editor
             if (currentGraph == null)
                 return;
 
-            var node = ownerWindow.CreateNodeAsset(currentGraph);
+            var node = ownerWindow.CreateNode(currentGraph);
             if (node == null)
                 return;
 
@@ -62,11 +62,10 @@ namespace Miemie.DialogSystem.Editor
                     if (node == null)
                         continue;
 
-                    var layout = DialogueGraphLayoutStore.GetPosition(graph, node);
-                    if (layout == Vector2.zero)
-                        layout = new Vector2(260f * index, 80f * (index % 4));
-
-                    CreateNodeView(node, layout);
+                    if (DialogueGraphLayoutStore.TryGetPosition(graph, node, out var layout))
+                        CreateNodeView(node, layout);
+                    else
+                        CreateNodeView(node, new Vector2(260f * index, 80f * (index % 4)));
                     index++;
                 }
 
@@ -211,6 +210,8 @@ namespace Miemie.DialogSystem.Editor
             if (currentGraph == null)
                 return;
 
+            SaveAllLayouts();
+
             var graph = currentGraph;
             var position = viewTransform.position;
             var scale = viewTransform.scale;
@@ -225,6 +226,18 @@ namespace Miemie.DialogSystem.Editor
                     MarkGridDirty();
                 });
             }
+        }
+
+        /// <summary>
+        /// 保存当前画布全部节点坐标
+        /// </summary>
+        public void SaveAllLayouts()
+        {
+            if (currentGraph == null)
+                return;
+
+            foreach (var view in nodeViews.Values)
+                view?.SaveLayout();
         }
 
         /// <summary>
@@ -253,7 +266,10 @@ namespace Miemie.DialogSystem.Editor
             if (selected is DialogueGraph graph)
             {
                 if (currentGraph != graph)
+                {
+                    SaveAllLayouts();
                     Populate(graph, focusStartNode: true);
+                }
                 style.display = DisplayStyle.Flex;
                 return;
             }
@@ -265,7 +281,10 @@ namespace Miemie.DialogSystem.Editor
                     return;
 
                 if (currentGraph != graphForNode)
+                {
+                    SaveAllLayouts();
                     Populate(graphForNode, focusStartNode: true);
+                }
 
                 SelectNode(node);
                 style.display = DisplayStyle.Flex;

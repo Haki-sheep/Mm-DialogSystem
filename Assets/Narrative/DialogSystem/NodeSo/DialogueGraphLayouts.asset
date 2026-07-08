@@ -9,13 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: b7c8d9e0f1a24365869708a9b0c1d2e3, type: 3}
   m_Name: DialogueGraphLayouts
-  m_EditorClassIdentifier: Assembly-CSharp-Editor:Miemie.DialogSystem.Editor:DialogueGraphLayoutDatabase
+  m_EditorClassIdentifier: 
   graphs:
-  - graph: {fileID: 11400000, guid: cd88d187e7a48214182d2970038cb14a, type: 2}
+  - graph: {fileID: 11400000, guid: 1a6b0eaf39c5bb84e839e26f36bba3e8, type: 2}
     layouts:
-    - node: {fileID: 11400000, guid: 132043c61f731e04da43aac35b89eda1, type: 2}
-      position: {x: 450.2857, y: 288.5714}
-    - node: {fileID: 11400000, guid: 67231b5ba10cd3d4c879c8fb548580ed, type: 2}
-      position: {x: 492.5714, y: 45.714283}
+    - nodeId: 1
+      hasPosition: 1
+      position: {x: 208, y: 312.5714}
+    - nodeId: 2
+      hasPosition: 1
+      position: {x: 357.7143, y: 312.5714}

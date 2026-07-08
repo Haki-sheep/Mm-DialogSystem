@@ -79,6 +79,9 @@ namespace Miemie.DialogSystem.Editor
 
         void OnDisable()
         {
+            graphView?.SaveAllLayouts();
+            DialogueGraphLayoutStore.SaveDatabaseAssets();
+
             EditorApplication.projectChanged -= OnProjectChanged;
             Undo.undoRedoPerformed -= OnUndoRedo;
             ReleaseAllMouseCaptures();
