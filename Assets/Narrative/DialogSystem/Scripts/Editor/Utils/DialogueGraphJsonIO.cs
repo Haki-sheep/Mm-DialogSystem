@@ -195,6 +195,7 @@ namespace Miemie.DialogSystem.Editor
                     nodeJson.choiceList.Add(new DialogueTransitionJson
                     {
                         labelText = choice.labelText,
+                        eventKey = choice.eventKey,
                         toNodeId = choice.toNodeId,
                         conditionList = ToConditionsModel(choice.ConditionList),
                     });
@@ -352,6 +353,7 @@ namespace Miemie.DialogSystem.Editor
                 var transition = new DialogueTransLineData
                 {
                     labelText = choice.labelText ?? string.Empty,
+                    eventKey = choice.eventKey ?? string.Empty,
                     toNodeId = choice.toNodeId,
                 };
 

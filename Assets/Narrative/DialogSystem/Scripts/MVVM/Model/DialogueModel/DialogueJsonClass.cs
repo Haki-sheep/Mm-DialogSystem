@@ -85,6 +85,8 @@ namespace Miemie.DialogSystem
     {
         /// <summary> 选项文本 </summary>
         public string labelText;
+        /// <summary> 对话事件Key </summary>
+        public string eventKey;
         /// <summary> 目标节点ID </summary>
         public int toNodeId;
         public List<DialogueConditionJson> conditionList = new();

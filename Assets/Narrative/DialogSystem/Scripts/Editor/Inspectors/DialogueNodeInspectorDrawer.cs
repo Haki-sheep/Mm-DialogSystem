@@ -14,7 +14,7 @@ namespace Miemie.DialogSystem.Editor
             if (nodeProp == null)
                 return;
 
-            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("nodeId"));
+            EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("nodeConfigId"));
             EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("speakType"));
             EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("speakerName"));
             EditorGUILayout.PropertyField(nodeProp.FindPropertyRelative("dialogText"));

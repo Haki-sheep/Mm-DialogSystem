@@ -22,7 +22,8 @@ namespace Miemie.DialogSystem.Editor
             for (int i = 0; i < list.arraySize; i++)
             {
                 var elem = list.GetArrayElementAtIndex(i);
-                if (elem.FindPropertyRelative("nodeId").intValue == node.ConfigId)
+                var idProp = elem.FindPropertyRelative("nodeConfigId");
+                if (idProp != null && idProp.intValue == node.ConfigId)
                     return elem;
             }
 

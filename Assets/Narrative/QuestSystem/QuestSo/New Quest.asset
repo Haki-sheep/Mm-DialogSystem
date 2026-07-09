@@ -19,7 +19,7 @@ MonoBehaviour:
   acceptMode: 1
   timeLimit: 0
   goalList:
-  - type: 0
+  - type: 3
     targetKey: 
     dialogueGraph: {fileID: 0}
     dialogueEventKey: 
