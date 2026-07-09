@@ -1,14 +1,14 @@
 namespace Miemie.DialogSystem.Quest
 {
   /// <summary>
-  /// 任务生命周期上下文
+  /// 任务状态上下文
   /// </summary>
-  public readonly struct QuestLifeCycleContext
+  public readonly struct QuestStateContext
   {
     /// <summary>
     /// 任务定义
     /// </summary>
-    public readonly Quest quest;
+    public readonly QuestData quest;
 
     /// <summary>
     /// 任务状态
@@ -18,7 +18,7 @@ namespace Miemie.DialogSystem.Quest
     /// <summary>
     /// 目标序号
     /// </summary>
-    public readonly int objectiveIndex;
+    public readonly int goalIndex;
 
     /// <summary>
     /// 当前进度
@@ -38,17 +38,17 @@ namespace Miemie.DialogSystem.Quest
     /// <summary>
     /// 创建生命周期上下文
     /// </summary>
-    public QuestLifeCycleContext(
-      Quest quest,
+    public QuestStateContext(
+      QuestData quest,
       EQuestState eQuestState,
-      int objectiveIndex,
+      int goalIndex,
       int currentCount,
       int needCount,
       float remainSeconds)
     {
       this.quest = quest;
       this.eQuestState = eQuestState;
-      this.objectiveIndex = objectiveIndex;
+      this.goalIndex = goalIndex;
       this.currentCount = currentCount;
       this.needCount = needCount;
       this.remainSeconds = remainSeconds;

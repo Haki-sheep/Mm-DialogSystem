@@ -40,6 +40,7 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
-    "com.hakisheep.mm-mvvm": "git@github.com:Haki-sheep/MmCSharp-MMVM.git?path=unity"
+    "com.hakisheep.mm-mvvm": "git@github.com:Haki-sheep/MmCSharp-MMVM.git?path=unity",
+    "com.hakisheep.mm-eventbus": "file:C:/CSharp/MieMiewEventBus/unity"
   }
 }

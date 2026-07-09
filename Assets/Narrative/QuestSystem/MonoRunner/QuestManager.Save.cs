@@ -38,8 +38,8 @@ namespace Miemie.DialogSystem.Quest
         if (runtime.eQuestState != EQuestState.执行中) continue;
 
         activeQuestList.Add(runtime);
-        if (runtime.quest.HasTimeLimit)
-          StartTimeLimit(runtime.quest.QuestId, saveData.remainSeconds);
+        if (runtime.questData.HasTimeLimit)
+          StartTimeLimit(runtime.questData.QuestId, saveData.remainSeconds);
       }
 
       return true;

@@ -82,7 +82,7 @@ namespace Miemie.DialogSystem.Quest
     private float GetRemainSeconds(QuestRuntimeState runtime)
     {
       if (runtime.eQuestState != EQuestState.执行中) return 0f;
-      if (!runtime.quest.HasTimeLimit) return 0f;
+      if (!runtime.questData.HasTimeLimit) return 0f;
       return Mathf.Max(0f, runtime.timeLimitEndAt - Time.time);
     }
   }

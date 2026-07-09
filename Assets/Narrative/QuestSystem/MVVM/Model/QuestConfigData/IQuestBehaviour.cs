@@ -3,26 +3,26 @@ namespace Miemie.DialogSystem.Quest
   /// <summary>
   /// 任务生命周期
   /// </summary>
-  public interface IQuestLifeCycle
+  public interface IQuestBehaviour
   {
     /// <summary>
     /// 接受任务
     /// </summary>
-    void OnAccepted(QuestLifeCycleContext context);
+    void OnAccepted(QuestStateContext context);
 
     /// <summary>
     /// 任务进度变化
     /// </summary>
-    void OnProgressChanged(QuestLifeCycleContext context);
+    void OnProgressChanged(QuestStateContext context);
 
     /// <summary>
     /// 完成任务
     /// </summary>
-    void OnCompleted(QuestLifeCycleContext context);
+    void OnCompleted(QuestStateContext context);
 
     /// <summary>
     /// 任务失败
     /// </summary>
-    void OnFailed(QuestLifeCycleContext context);
+    void OnFailed(QuestStateContext context);
   }
 }

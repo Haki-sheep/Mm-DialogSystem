@@ -24,8 +24,8 @@ namespace Miemie.DialogSystem.Quest
         }
 
         stateDict[quest.QuestId] = new QuestRuntimeState(quest);
-        if (stateDict[quest.QuestId].objectiveList.Count == 0)
-          Debug.LogWarning($"[Quest] {quest.Title} 无目标 请在 objectiveList 添加步骤");
+        if (stateDict[quest.QuestId].goalList.Count == 0)
+          Debug.LogWarning($"[Quest] {quest.Title} 无目标 请在 goalList 添加步骤");
       }
 
       if (stateDict.Count == 0)
@@ -37,10 +37,14 @@ namespace Miemie.DialogSystem.Quest
     /// </summary>
     private void AcceptSystemQuests()
     {
+      // 遍历所有任务
       foreach (var runtime in stateDict.Values)
       {
-        if (runtime.eQuestState == EQuestState.可用 && runtime.quest.AcceptMode == EQuestAcceptMode.系统派发)
-          Accept(runtime.quest.QuestId);
+        // 如果任务状态为可用且接受模式为系统派发，则接受任务
+        if (runtime.eQuestState == EQuestState.可用
+                && runtime.questData.AcceptMode == EQuestAcceptMode.系统派发)
+
+          Accept(runtime.questData.QuestId);
       }
     }
 
@@ -54,8 +58,10 @@ namespace Miemie.DialogSystem.Quest
         if (runtime.eQuestState != EQuestState.未激活) continue;
 
         bool ready = true;
-        foreach (int preId in runtime.quest.PrerequisiteIdList)
+        // 遍历前置任务列表
+        foreach (int preId in runtime.questData.PrerequisiteIdList)
         {
+          // 如果前置任务未完成，则当前任务不可用
           if (GetState(preId) != EQuestState.提交)
           {
             ready = false;
@@ -63,44 +69,31 @@ namespace Miemie.DialogSystem.Quest
           }
         }
 
+        // 如果前置任务都完成，则当前任务可用
         if (ready) runtime.eQuestState = EQuestState.可用;
       }
     }
 
     /// <summary>
-    /// 按Key推进执行中任务
-    /// </summary>
-    private void AdvanceByKey(EQuestObjectiveType type, string targetKey, int delta)
-    {
-      AdvanceMatchedObjectives(type, delta, objective => IsKeyMatch(objective, targetKey));
-    }
-
-    /// <summary>
-    /// 按对话事件推进执行中任务
-    /// </summary>
-    private void AdvanceDialogue(DialogueGraph graph, string eventKey, int delta)
-    {
-      AdvanceMatchedObjectives(EQuestObjectiveType.对话, delta, objective => IsDialogueMatch(objective, graph, eventKey));
-    }
-
-    /// <summary>
     /// 推进匹配的任务目标
     /// </summary>
-    private void AdvanceMatchedObjectives(EQuestObjectiveType type, int delta, System.Func<QuestObjective, bool> isMatch)
+    private void AdvanceMatchedGoals(EQuestGoalType type, int delta, System.Func<QuestGoal, bool> isMatch)
     {
+      // 遍历执行中任务
       for (int q = 0; q < activeQuestList.Count; q++)
       {
         var runtime = activeQuestList[q];
         if (runtime.eQuestState != EQuestState.执行中) continue;
 
-        for (int i = 0; i < runtime.objectiveList.Count; i++)
+        // 遍历任务目标
+        for (int i = 0; i < runtime.goalList.Count; i++)
         {
-          var objective = runtime.objectiveList[i];
-          if (objective == null) continue;
-          if (objective.type != type) continue;
-          if (!isMatch(objective)) continue;
+          var goal = runtime.goalList[i];
+          if (goal == null) continue;
+          if (goal.type != type) continue;
+          if (!isMatch(goal)) continue;
 
-          int need = objective.count > 0 ? objective.count : 1;
+          int need = goal.count > 0 ? goal.count : 1;
           if (runtime.progressList[i] >= need) continue;
 
           int currentCount = Mathf.Min(runtime.progressList[i] + delta, need);
@@ -111,22 +104,6 @@ namespace Miemie.DialogSystem.Quest
     }
 
     /// <summary>
-    /// 判断Key是否匹配
-    /// </summary>
-    private static bool IsKeyMatch(QuestObjective objective, string targetKey)
-    {
-      return !string.IsNullOrEmpty(objective.targetKey) && objective.targetKey == targetKey;
-    }
-
-    /// <summary>
-    /// 判断对话事件是否匹配
-    /// </summary>
-    private static bool IsDialogueMatch(QuestObjective objective, DialogueGraph graph, string eventKey)
-    {
-      return objective.dialogueGraph == graph && objective.dialogueEventKey == eventKey;
-    }
-
-    /// <summary>
     /// 完成任务
     /// </summary>
     private void CompleteQuest(QuestRuntimeState runtime)
@@ -134,21 +111,13 @@ namespace Miemie.DialogSystem.Quest
       if (!runtime.AllDone()) return;
       if (runtime.eQuestState != EQuestState.执行中) return;
 
-      CancelTimeLimit(runtime.quest.QuestId);
-      RemoveActive(runtime);
+      CancelTimeLimit(runtime.questData.QuestId);
+      activeQuestList.Remove(runtime);
       runtime.eQuestState = EQuestState.提交;
 
-      Debug.Log($"[Quest] 提交 {runtime.quest.Title} (id={runtime.quest.QuestId})");
+      Debug.Log($"[Quest] 提交 {runtime.questData.Title} (id={runtime.questData.QuestId})");
       NotifyCompleted(runtime);
       RefreshAvailable();
-    }
-
-    /// <summary>
-    /// 移出执行列表
-    /// </summary>
-    private void RemoveActive(QuestRuntimeState runtime)
-    {
-      activeQuestList.Remove(runtime);
     }
 
     /// <summary>
@@ -156,29 +125,30 @@ namespace Miemie.DialogSystem.Quest
     /// </summary>
     private void NotifyAccepted(QuestRuntimeState runtime)
     {
+      // 创建上下文
       var context = CreateContext(runtime, -1, 0, 0);
-      runtime.quest.OnAccepted(context);
-      NarrativeEventBusProvider.Instance?.Publish(NarrativeEvents.QuestAccepted, runtime.quest.QuestId);
+      // 调用任务的接受回调
+      runtime.questData.OnAccepted(context);
+      // 事件总线发布任务接受事件
+      NarrativeEventBus.NarrytiveBus.Publish(NarrativeEventKeys.QuestAccepted, runtime.questData.QuestId);
     }
 
     /// <summary>
     /// 通知进度变化
     /// </summary>
-    private void NotifyProgressChanged(QuestRuntimeState runtime, int objectiveIndex, int currentCount, int needCount)
+    private void NotifyProgressChanged(QuestRuntimeState runtime, int goalIndex, int currentCount, int needCount)
     {
-      var context = CreateContext(runtime, objectiveIndex, currentCount, needCount);
-      runtime.quest.OnProgressChanged(context);
-
-      var objective = runtime.objectiveList[objectiveIndex];
-      NarrativeEventBusProvider.Instance?.Publish(NarrativeEvents.QuestProgressChanged,
-        new QuestProgressChangedEventData
-        {
-          questId = runtime.quest.QuestId,
-          objectiveIndex = objectiveIndex,
-          eObjectiveType = objective.type,
-          currentCount = currentCount,
-          needCount = needCount,
-        });
+      // 创建上下文
+      var context = CreateContext(runtime, goalIndex, currentCount, needCount);
+      // 调用任务的进度变化回调
+      runtime.questData.OnProgressChanged(context);
+      // 事件总线发布任务进度变化事件
+      NarrativeEventBus.NarrytiveBus.Publish(
+        NarrativeEventKeys.QuestProgressChanged,
+        runtime.questData.QuestId,
+        goalIndex,
+        currentCount,
+        needCount);
     }
 
     /// <summary>
@@ -187,8 +157,8 @@ namespace Miemie.DialogSystem.Quest
     private void NotifyCompleted(QuestRuntimeState runtime)
     {
       var context = CreateContext(runtime, -1, 0, 0);
-      runtime.quest.OnCompleted(context);
-      NarrativeEventBusProvider.Instance?.Publish(NarrativeEvents.QuestCompleted, runtime.quest.QuestId);
+      runtime.questData.OnCompleted(context);
+      NarrativeEventBus.NarrytiveBus.Publish(NarrativeEventKeys.QuestCompleted, runtime.questData.QuestId);
     }
 
     /// <summary>
@@ -197,27 +167,27 @@ namespace Miemie.DialogSystem.Quest
     private void NotifyFailed(QuestRuntimeState runtime)
     {
       var context = CreateContext(runtime, -1, 0, 0);
-      runtime.quest.OnFailed(context);
-      NarrativeEventBusProvider.Instance?.Publish(NarrativeEvents.QuestFailed, runtime.quest.QuestId);
+      runtime.questData.OnFailed(context);
+      NarrativeEventBus.NarrytiveBus.Publish(NarrativeEventKeys.QuestFailed, runtime.questData.QuestId);
     }
 
     /// <summary>
     /// 创建生命周期上下文
     /// </summary>
     /// <param name="runtime">任务运行时数据</param>
-    /// <param name="objectiveIndex">目标序号</param>
+    /// <param name="goalIndex">目标序号</param>
     /// <param name="currentCount">当前进度</param>
     /// <param name="needCount">目标数量</param>
     /// <returns>生命周期上下文</returns>
-    private QuestLifeCycleContext CreateContext(QuestRuntimeState runtime,
-                                                int objectiveIndex,
+    private QuestStateContext CreateContext(QuestRuntimeState runtime,
+                                                int goalIndex,
                                                 int currentCount,
                                                 int needCount)
     {
-      return new QuestLifeCycleContext(
-        runtime.quest,
+      return new QuestStateContext(
+        runtime.questData,
         runtime.eQuestState,
-        objectiveIndex,
+        goalIndex,
         currentCount,
         needCount,
         GetRemainSeconds(runtime));

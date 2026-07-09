@@ -15,6 +15,12 @@
       "dependencies": {},
       "hash": "e5acc106ee196bc5a32fb14cdf2987b0f96d11e0"
     },
+    "com.hakisheep.mm-eventbus": {
+      "version": "file:C:/CSharp/MieMiewEventBus/unity",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.hakisheep.mm-mvvm": {
       "version": "git@github.com:Haki-sheep/MmCSharp-MMVM.git?path=unity",
       "depth": 0,

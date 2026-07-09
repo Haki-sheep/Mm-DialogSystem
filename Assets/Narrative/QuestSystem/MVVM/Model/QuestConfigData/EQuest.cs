@@ -18,5 +18,5 @@ namespace Miemie.DialogSystem.Quest
   /// <summary>
   /// 任务目标类型
   /// </summary>
-  public enum EQuestObjectiveType { 对话, 击杀, 收集, 到达 }
+  public enum EQuestGoalType { 对话, 击杀, 收集, 到达 }
 }

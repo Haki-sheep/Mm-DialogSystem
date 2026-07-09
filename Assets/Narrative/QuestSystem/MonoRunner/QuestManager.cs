@@ -7,16 +7,16 @@ namespace Miemie.DialogSystem.Quest
 {
   public partial class QuestManager : MonoBehaviour
   {
-    [Header("任务列表")]
+    [Header("配置侧任务列表")]
     [SerializeField]
-    private List<Quest> questList = new();
+    private List<QuestData> questList = new();
 
-    [Header("存档")]
+    [Header("存档设置")]
     [SerializeField]
     private bool loadSaveOnStart = true;
 
     /// <summary>
-    /// 任务运行时字典
+    /// 已注册任务字典
     /// </summary>
     private readonly Dictionary<int, QuestRuntimeState> stateDict = new();
 
@@ -30,11 +30,14 @@ namespace Miemie.DialogSystem.Quest
     /// </summary>
     private readonly Dictionary<int, CancellationTokenSource> timeLimitDict = new();
 
-    QuestCrossService crossService;
+    /// <summary>
+    /// 任务跨模块服务
+    /// </summary>
+    private QuestCrossService crossService;
 
     public static QuestManager Instance { get; private set; }
 
-    public IReadOnlyList<Quest> RegisteredQuests => questList;
+    public IReadOnlyList<QuestData> RegisteredQuests => questList;
 
     #region 生命周期
 
@@ -100,21 +103,30 @@ namespace Miemie.DialogSystem.Quest
     /// </summary>
     public bool Accept(int questId)
     {
+      // 检查任务是否存在
       if (!stateDict.TryGetValue(questId, out var runtime)) return false;
+
+      // 如果任务状态为不可用、提交或失败，则不接受任务
       if (runtime.eQuestState != EQuestState.可用
           && runtime.eQuestState != EQuestState.提交
           && runtime.eQuestState != EQuestState.失败) return false;
-
+    
+      // 取消该任务的限时功能
       CancelTimeLimit(questId);
-      RemoveActive(runtime);
+      // 移出执行列表
+      activeQuestList.Remove(runtime);
+      // 重置该任务的进度
       runtime.ResetProgress();
+      // 设置任务状态为执行中
       runtime.eQuestState = EQuestState.执行中;
       runtime.acceptedAt = Time.time;
+      // 添加到执行列表
       activeQuestList.Add(runtime);
-
-      if (runtime.quest.HasTimeLimit)
-        StartTimeLimit(questId, runtime.quest.TimeLimit);
-
+      // 如果任务有时间限制，则启动限时功能
+      if (runtime.questData.HasTimeLimit)
+        StartTimeLimit(questId, runtime.questData.TimeLimit);
+  
+      // 通知任务接受
       NotifyAccepted(runtime);
       return true;
     }
@@ -128,7 +140,7 @@ namespace Miemie.DialogSystem.Quest
       if (runtime.eQuestState != EQuestState.执行中) return false;
 
       CancelTimeLimit(questId);
-      RemoveActive(runtime);
+      activeQuestList.Remove(runtime);
       runtime.eQuestState = EQuestState.失败;
       NotifyFailed(runtime);
       return true;
@@ -161,10 +173,10 @@ namespace Miemie.DialogSystem.Quest
       if (!stateDict.TryGetValue(questId, out var runtime)) return false;
       if (runtime.eQuestState != EQuestState.执行中) return false;
 
-      for (int i = 0; i < runtime.objectiveList.Count; i++)
+      for (int i = 0; i < runtime.goalList.Count; i++)
       {
-        if (runtime.objectiveList[i] == null) continue;
-        int need = runtime.objectiveList[i].count > 0 ? runtime.objectiveList[i].count : 1;
+        if (runtime.goalList[i] == null) continue;
+        int need = runtime.goalList[i].count > 0 ? runtime.goalList[i].count : 1;
         runtime.progressList[i] = need;
         NotifyProgressChanged(runtime, i, need, need);
       }
@@ -186,25 +198,25 @@ namespace Miemie.DialogSystem.Quest
     /// <summary>
     /// 查询任务定义
     /// </summary>
-    public Quest GetQuest(int questId)
+    public QuestData GetQuest(int questId)
     {
       if (!stateDict.TryGetValue(questId, out var runtime)) return null;
-      return runtime.quest;
+      return runtime.questData;
     }
 
     /// <summary>
     /// 查询目标数量
     /// </summary>
-    public int GetObjectiveCount(int questId)
+    public int GetGoalCount(int questId)
     {
       if (!stateDict.TryGetValue(questId, out var runtime)) return 0;
-      return runtime.objectiveList.Count;
+      return runtime.goalList.Count;
     }
 
     /// <summary>
     /// 查询目标进度
     /// </summary>
-    public int GetObjectiveProgress(int questId, int index)
+    public int GetGoalProgress(int questId, int index)
     {
       if (!stateDict.TryGetValue(questId, out var runtime)) return 0;
       if (index < 0 || index >= runtime.progressList.Count) return 0;

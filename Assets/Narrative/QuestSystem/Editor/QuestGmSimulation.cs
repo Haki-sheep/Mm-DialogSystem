@@ -12,15 +12,15 @@ namespace Miemie.DialogSystem.Quest.Editor
     /// <summary>
     /// 模拟按钮显示文本
     /// </summary>
-    public static string ButtonLabel(QuestObjective objective)
+    public static string ButtonLabel(QuestGoal goal)
     {
-      if (objective == null) return "模拟";
-      return objective.type switch
+      if (goal == null) return "模拟";
+      return goal.type switch
       {
-        EQuestObjectiveType.对话 => "对话",
-        EQuestObjectiveType.击杀 => "击杀",
-        EQuestObjectiveType.收集 => "收集",
-        EQuestObjectiveType.到达 => "到达",
+        EQuestGoalType.对话 => "对话",
+        EQuestGoalType.击杀 => "击杀",
+        EQuestGoalType.收集 => "收集",
+        EQuestGoalType.到达 => "到达",
         _ => "模拟",
       };
     }
@@ -28,22 +28,24 @@ namespace Miemie.DialogSystem.Quest.Editor
     /// <summary>
     /// 按目标类型触发一次游戏事件
     /// </summary>
-    public static void FireOnce(QuestObjective objective)
+    public static void FireOnce(QuestGoal goal)
     {
-      if (objective == null) return;
-      switch (objective.type)
+      if (goal == null) return;
+
+      var bus = NarrativeEventBus.NarrytiveBus;
+      switch (goal.type)
       {
-        case EQuestObjectiveType.对话:
-          GameNotify.DialogueEvent(objective.dialogueGraph, objective.dialogueEventKey);
+        case EQuestGoalType.对话:
+          bus.Publish(NarrativeEventKeys.DialogueTriggered, goal.dialogueGraph, goal.dialogueEventKey);
           break;
-        case EQuestObjectiveType.击杀:
-          GameNotify.Kill(objective.targetKey);
+        case EQuestGoalType.击杀:
+          bus.Publish(NarrativeEventKeys.EnemyKilled, goal.targetKey, 1);
           break;
-        case EQuestObjectiveType.收集:
-          GameNotify.Collect(objective.targetKey);
+        case EQuestGoalType.收集:
+          bus.Publish(NarrativeEventKeys.ItemCollected, goal.targetKey, 1);
           break;
-        case EQuestObjectiveType.到达:
-          GameNotify.EnterZone(objective.targetKey);
+        case EQuestGoalType.到达:
+          bus.Publish(NarrativeEventKeys.ZoneEntered, goal.targetKey);
           break;
       }
     }

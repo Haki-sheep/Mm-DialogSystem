@@ -28,10 +28,25 @@ namespace Miemie.DialogSystem.Quest
             this.manager = manager;
         }
 
+        /// <summary>
+        /// 获取任务状态
+        /// </summary>
+        /// <param name="questId"></param>
+        /// <returns></returns>
         public EQuestState GetState(int questId) => manager.GetState(questId);
 
+        /// <summary>
+        /// 接受任务
+        /// </summary>
+        /// <param name="questId"></param>
+        /// <returns></returns>
         public bool Accept(int questId) => manager.Accept(questId);
 
+        /// <summary>
+        /// 尝试提交任务
+        /// </summary>
+        /// <param name="questId"></param>
+        /// <returns></returns>
         public bool TrySubmit(int questId) => manager.TrySubmit(questId);
     }
 }

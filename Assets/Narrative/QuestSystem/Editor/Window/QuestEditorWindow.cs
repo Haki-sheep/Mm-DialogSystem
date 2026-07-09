@@ -17,7 +17,7 @@ namespace Miemie.DialogSystem.Quest.Editor
 
     private Tab tab = Tab.配置;
     private OdinMenuTree menuTree;
-    private Quest selectedQuest;
+    private QuestData selectedQuest;
     private Vector2 gmScroll;
     private readonly Dictionary<int, string> gmTipDict = new();
 
@@ -116,7 +116,7 @@ namespace Miemie.DialogSystem.Quest.Editor
       EditorGUILayout.PropertyField(so.FindProperty("description"));
       EditorGUILayout.PropertyField(so.FindProperty("acceptMode"));
       EditorGUILayout.PropertyField(so.FindProperty("timeLimit"));
-      EditorGUILayout.PropertyField(so.FindProperty("objectiveList"), true);
+      EditorGUILayout.PropertyField(so.FindProperty("goalList"), true);
       EditorGUILayout.PropertyField(so.FindProperty("prerequisiteIdList"), true);
       so.ApplyModifiedProperties();
     }
@@ -136,11 +136,11 @@ namespace Miemie.DialogSystem.Quest.Editor
       };
       menuTree.Selection.SelectionChanged += _ =>
       {
-        selectedQuest = menuTree.Selection.SelectedValue as Quest;
+        selectedQuest = menuTree.Selection.SelectedValue as QuestData;
         Repaint();
       };
 
-      GraphAssetMenuTreeUtility.AddAllAssetsByType(menuTree, "任务", typeof(Quest));
+      GraphAssetMenuTreeUtility.AddAllAssetsByType(menuTree, "任务", typeof(QuestData));
       menuTree.EnumerateTree().AddThumbnailIcons(true);
 
       if (selectedQuest != null)
@@ -161,7 +161,7 @@ namespace Miemie.DialogSystem.Quest.Editor
     {
       QuestEditorPaths.EnsureQuestFolder();
       string path = AssetDatabase.GenerateUniqueAssetPath($"{QuestEditorPaths.QuestAssetPath}/New Quest.asset");
-      var quest = CreateInstance<Quest>();
+      var quest = CreateInstance<QuestData>();
       AssetDatabase.CreateAsset(quest, path);
       AssetDatabase.SaveAssets();
       selectedQuest = quest;
@@ -213,7 +213,7 @@ namespace Miemie.DialogSystem.Quest.Editor
     /// <summary>
     /// 绘制单个任务的 GM 行
     /// </summary>
-    private void DrawQuestGmRow(QuestManager mgr, Quest quest)
+    private void DrawQuestGmRow(QuestManager mgr, QuestData quest)
     {
       EditorGUILayout.BeginVertical("box");
       var state = mgr.GetState(quest.QuestId);
@@ -223,20 +223,20 @@ namespace Miemie.DialogSystem.Quest.Editor
         stateText = $"{stateText}  {timeText}";
       EditorGUILayout.LabelField($"[{quest.QuestId}] {quest.Title}  —  {stateText}", EditorStyles.boldLabel);
 
-      var objectives = quest.GetObjectives();
-      for (int i = 0; i < objectives.Count; i++)
+      var goals = quest.GetGoals();
+      for (int i = 0; i < goals.Count; i++)
       {
-        var o = objectives[i];
-        int prog = mgr.GetObjectiveProgress(quest.QuestId, i);
-        int need = o != null && o.count > 0 ? o.count : 1;
-        string hint = ObjectiveHint(o);
+        var goal = goals[i];
+        int prog = mgr.GetGoalProgress(quest.QuestId, i);
+        int need = goal != null && goal.count > 0 ? goal.count : 1;
+        string hint = GoalHint(goal);
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField($"  {i + 1}. {o?.type} {hint}  {prog}/{need}");
-        if (state == EQuestState.执行中 && o != null && prog < need)
+        EditorGUILayout.LabelField($"  {i + 1}. {goal?.type} {hint}  {prog}/{need}");
+        if (state == EQuestState.执行中 && goal != null && prog < need)
         {
-          if (GUILayout.Button(QuestGmSimulation.ButtonLabel(o), GUILayout.Width(52)))
-            QuestGmSimulation.FireOnce(o);
+          if (GUILayout.Button(QuestGmSimulation.ButtonLabel(goal), GUILayout.Width(52)))
+            QuestGmSimulation.FireOnce(goal);
         }
         EditorGUILayout.EndHorizontal();
       }
@@ -284,19 +284,19 @@ namespace Miemie.DialogSystem.Quest.Editor
     /// <summary>
     /// 目标匹配提示文本
     /// </summary>
-    private static string ObjectiveHint(QuestObjective o)
+    private static string GoalHint(QuestGoal goal)
     {
-      if (o == null) return "";
-      if (o.type != EQuestObjectiveType.对话) return o.targetKey;
+      if (goal == null) return "";
+      if (goal.type != EQuestGoalType.对话) return goal.targetKey;
 
-      string graphName = o.dialogueGraph != null ? o.dialogueGraph.name : "未选择对话图";
-      return $"{graphName} / {o.dialogueEventKey}";
+      string graphName = goal.dialogueGraph != null ? goal.dialogueGraph.name : "未选择对话图";
+      return $"{graphName} / {goal.dialogueEventKey}";
     }
 
     /// <summary>
     /// 限时任务显示文本
     /// </summary>
-    private static string TimeText(QuestManager mgr, Quest quest, EQuestState state)
+    private static string TimeText(QuestManager mgr, QuestData quest, EQuestState state)
     {
       if (!quest.HasTimeLimit) return "";
       if (state != EQuestState.执行中) return $"限时 {FormatTime(quest.TimeLimit)}";

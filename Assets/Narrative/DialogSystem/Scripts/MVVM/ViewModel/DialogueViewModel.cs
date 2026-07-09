@@ -9,9 +9,6 @@ namespace Miemie.DialogSystem
     /// </summary>
     public class DialogueViewModel : IViewModel
     {
-        /// <summary> 整图结束时的信号 Key </summary>
-        public const string GraphFinishedSignalKey = "GraphFinished";
-
         /// <summary> 运行时状态 </summary>
         private readonly DialogueRuntimeModel runtimeModel = new();
 
@@ -23,9 +20,6 @@ namespace Miemie.DialogSystem
 
         /// <summary> 对话结束事件 给 View 收起 UI </summary>
         public event Action DialogEnded;
-
-        /// <summary> 对话业务信号 图 + eventKey 外部自行订阅 </summary>
-        public event Action<DialogueGraph, string> DialogueSignal;
 
         public DialogueRuntimeModel RuntimeModel => runtimeModel;
         public DialogueGraph Graph => runtimeModel.Graph;
@@ -49,7 +43,6 @@ namespace Miemie.DialogSystem
             NodeChanged = null;
             OptionsChanged = null;
             DialogEnded = null;
-            DialogueSignal = null;
         }
 
         #endregion
@@ -142,9 +135,9 @@ namespace Miemie.DialogSystem
 
             var choice = choiceList[index];
 
-            // 选项带信号则抛给外部 不直连任务系统
+            // 选项带信号则发布到事件总线
             if (!string.IsNullOrEmpty(choice.eventKey))
-                DialogueSignal?.Invoke(runtimeModel.Graph, choice.eventKey);
+                NarrativeEventBus.NarrytiveBus.Publish(NarrativeEventKeys.DialogueTriggered, runtimeModel.Graph, choice.eventKey);
 
             // 跳转到选项对应的节点
             GoTo(choice.ResolveToNode(runtimeModel.Graph));
@@ -159,7 +152,7 @@ namespace Miemie.DialogSystem
             runtimeModel.SetCurrentNode(null);
             DialogEnded?.Invoke();
             if (graph != null)
-                DialogueSignal?.Invoke(graph, GraphFinishedSignalKey);
+                NarrativeEventBus.NarrytiveBus.Publish(NarrativeEventKeys.DialogueTriggered, graph, NarrativeEventKeys.DialogueGraphFinishedKey);
         }
 
         #endregion

@@ -9,10 +9,10 @@ namespace Miemie.DialogSystem.Quest
   public class QuestRuntimeState : IModelState
   {
     /// <summary> 任务 </summary>
-    public readonly Quest quest;
+    public readonly QuestData questData;
 
     /// <summary> 目标列表 </summary>
-    public readonly List<QuestObjective> objectiveList;
+    public readonly List<QuestGoal> goalList;
 
     /// <summary> 进度列表 </summary>
     public readonly List<int> progressList = new();
@@ -31,11 +31,11 @@ namespace Miemie.DialogSystem.Quest
     /// <summary>
     /// 创建运行时数据
     /// </summary>
-    public QuestRuntimeState(Quest quest)
+    public QuestRuntimeState(QuestData questData)
     {
-      this.quest = quest;
-      objectiveList = new List<QuestObjective>(quest.GetObjectives());
-      for (int i = 0; i < objectiveList.Count; i++)
+      this.questData = questData;
+      goalList = new List<QuestGoal>(questData.GetGoals());
+      for (int i = 0; i < goalList.Count; i++)
         progressList.Add(0);
     }
 
@@ -44,10 +44,10 @@ namespace Miemie.DialogSystem.Quest
     /// </summary>
     public bool AllDone()
     {
-      for (int i = 0; i < objectiveList.Count; i++)
+      for (int i = 0; i < goalList.Count; i++)
       {
-        if (objectiveList[i] == null) continue;
-        int need = objectiveList[i].count > 0 ? objectiveList[i].count : 1;
+        if (goalList[i] == null) continue;
+        int need = goalList[i].count > 0 ? goalList[i].count : 1;
         if (progressList[i] < need) return false;
       }
       return true;
@@ -69,7 +69,7 @@ namespace Miemie.DialogSystem.Quest
     {
       return new QuestSaveData
       {
-        questId = quest.QuestId,
+        questId = questData.QuestId,
         eQuestState = eQuestState,
         progressList = new List<int>(progressList),
         acceptedAt = acceptedAt,
