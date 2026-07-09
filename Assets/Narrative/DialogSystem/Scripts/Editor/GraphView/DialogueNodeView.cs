@@ -16,18 +16,18 @@ namespace Miemie.DialogSystem.Editor
         bool hasSavedLayout;
         Vector2 savedLayoutPosition;
 
-        public DialogueNode Node { get; }
+        public DialogueNodeData Node { get; }
 
         public Port InputPort { get; private set; }
 
-        public DialogueNodeView(DialogueNode node, DialogueGraph graph)
+        public DialogueNodeView(DialogueNodeData node, DialogueGraph graph)
         {
             Node = node;
             this.graph = graph;
 
             title = BuildTitle();
             ApplyTitleLayout();
-            viewDataKey = $"{graph.GetInstanceID()}_{node.NodeId}";
+            viewDataKey = $"{graph.GetInstanceID()}_{node.ConfigId}";
             capabilities |= Capabilities.Selectable | Capabilities.Movable | Capabilities.Deletable;
 
             InputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(float));
@@ -89,7 +89,7 @@ namespace Miemie.DialogSystem.Editor
         public void SyncChoicePorts()
         {
             if (Node.ChoiceList == null || Node.ChoiceList.Count == 0)
-                Node.AddChoice(new DialogueTransition { labelText = "选项1" });
+                Node.AddChoice(new DialogueTransLineData { labelText = "选项1" });
 
             while (outputPorts.Count > Node.ChoiceList.Count)
             {

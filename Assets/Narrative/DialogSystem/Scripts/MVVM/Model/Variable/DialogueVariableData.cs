@@ -18,7 +18,7 @@ namespace Miemie.DialogSystem
     /// Editor 窗口 Variables 面板中一条
     /// </summary>
     [Serializable]
-    public class DialogueVariableDef
+    public class DialogueVariableData
     {
         /// <summary> 变量名 </summary>
         [SerializeField]

@@ -12,63 +12,54 @@ namespace Miemie.DialogSystem
     public class DialogueRunner : SerializedMonoBehaviour
     {
         [SerializeField]
-        DialogueGraph dialogueGraph;
+        private DialogueGraph dialogueGraph;
 
         [SerializeField]
-        StandDialogView dialogView;
+        private StandDialogView dialogView;
 
         [SerializeField]
-        bool autoStart = true;
+        private bool autoStart = true;
 
         [SerializeField, ReadOnly]
-        DialogueNode currentNode;
+        private DialogueNodeData currentNode;
 
-        DialogueViewModel viewModel;
-        DialogueCrossService crossService;
+        private DialogueViewModel viewModel;
+        private DialogueCrossService crossService;
 
         public DialogueGraph DialogueGraph => dialogueGraph;
         public DialogueViewModel ViewModel => viewModel;
-        public DialogueNode CurrentNode => viewModel?.CurrentNode;
+        public DialogueNodeData CurrentNode => viewModel?.CurrentNode;
 
         #region 生命周期
 
-        void Awake()
+        private void Awake()
         {
+            // 创建vm对象
             viewModel = new DialogueViewModel();
             viewModel.Initialize();
+
+            // 创建跨模块服务
             crossService = new DialogueCrossService(viewModel);
             BusinessModuleHub.Instance.RegisterBusinessModule(crossService);
 
+            // View层绑定VM
             if (dialogView != null)
                 dialogView.Bind(viewModel);
         }
 
-        void Start()
+        private void Start()
         {
             if (autoStart)
                 StartDialog();
         }
 
-        void Update()
+        private void Update()
         {
+            // 仅同步 Inspector 只读显示 输入已交给 View
             currentNode = viewModel?.CurrentNode;
-            if (currentNode == null) return;
-
-            if (Input.GetKeyDown(KeyCode.Space))
-                Advance();
-
-            if (!currentNode.IsOptionNode) return;
-
-            var choices = viewModel.RuntimeModel.AvailableChoiceList;
-            viewModel.RefreshAvailableChoices();
-            for (int i = 0; i < choices.Count && i < 9; i++)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
-                    SelectOption(i);
-            }
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             dialogView?.Unbind();
             viewModel?.Shutdown();
@@ -98,9 +89,9 @@ namespace Miemie.DialogSystem
         }
 
         /// <summary>
-        /// 前进
+        /// 继续对话
         /// </summary>
-        public void Advance() => viewModel?.Advance();
+        public void GoNext() => viewModel?.GoNext();
 
         /// <summary>
         /// 选择选项

@@ -120,9 +120,9 @@ namespace Miemie.DialogSystem.Editor
             };
 
             var used = new HashSet<string>();
-            if (graph.Variables != null)
+            if (graph.VariableList != null)
             {
-                foreach (var def in graph.Variables)
+                foreach (var def in graph.VariableList)
                 {
                     if (def != null && !string.IsNullOrEmpty(def.name))
                         used.Add(def.name);
@@ -145,15 +145,15 @@ namespace Miemie.DialogSystem.Editor
         /// </summary>
         public static string DrawVariablePopup(DialogueGraph graph, string currentName)
         {
-            if (graph?.Variables == null || graph.Variables.Count == 0)
+            if (graph?.VariableList == null || graph.VariableList.Count == 0)
                 return EditorGUILayout.TextField("变量", currentName);
 
             var names = new List<string> { "(无)" };
             int selected = 0;
 
-            for (int i = 0; i < graph.Variables.Count; i++)
+            for (int i = 0; i < graph.VariableList.Count; i++)
             {
-                var def = graph.Variables[i];
+                var def = graph.VariableList[i];
                 if (def == null || string.IsNullOrEmpty(def.name))
                     continue;
 

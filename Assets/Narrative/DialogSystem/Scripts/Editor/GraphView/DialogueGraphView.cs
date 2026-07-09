@@ -18,7 +18,7 @@ namespace Miemie.DialogSystem.Editor
         internal const float DefaultNodeHeight = 120f;
 
         readonly DialogueGraphEditorWindow ownerWindow;
-        readonly Dictionary<DialogueNode, DialogueNodeView> nodeViews = new Dictionary<DialogueNode, DialogueNodeView>();
+        readonly Dictionary<DialogueNodeData, DialogueNodeView> nodeViews = new Dictionary<DialogueNodeData, DialogueNodeView>();
 
         DialogueGraph currentGraph;
         bool isPopulating;
@@ -86,7 +86,7 @@ namespace Miemie.DialogSystem.Editor
                 targetNode = targetView?.Node,
             };
 
-            if (edge.userData is DialogueTransition choiceTransition)
+            if (edge.userData is DialogueTransLineData choiceTransition)
                 handle.choiceTransition = choiceTransition;
             else if (!sourceView.Node.IsOptionNode)
                 handle.targetNode = targetView?.Node;

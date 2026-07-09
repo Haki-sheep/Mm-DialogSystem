@@ -7,7 +7,7 @@ namespace Miemie.DialogSystem.Editor
 {
     partial class DialogueGraphEditorWindow
     {
-        public DialogueGraph FindGraphForNode(DialogueNode node)
+        public DialogueGraph FindGraphForNode(DialogueNodeData node)
         {
             if (node == null)
                 return null;
@@ -28,14 +28,14 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 在图内创建节点
         /// </summary>
-        public DialogueNode CreateNode(DialogueGraph graph)
+        public DialogueNodeData CreateNode(DialogueGraph graph)
         {
             if (graph == null)
                 return null;
 
-            var node = new DialogueNode();
+            var node = new DialogueNodeData();
             int maxId = graph.NodeList != null && graph.NodeList.Count > 0
-                ? graph.NodeList.Where(n => n != null).Select(n => n.NodeId).DefaultIfEmpty(0).Max()
+                ? graph.NodeList.Where(n => n != null).Select(n => n.ConfigId).DefaultIfEmpty(0).Max()
                 : 0;
             node.SetNodeId(maxId + 1);
             node.SetSpeakerName($"节点{maxId + 1}");
@@ -84,7 +84,7 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            if (selected is DialogueNode node)
+            if (selected is DialogueNodeData node)
             {
                 var parentGraph = FindGraphForNode(node);
                 if (parentGraph == null)
@@ -109,7 +109,7 @@ namespace Miemie.DialogSystem.Editor
             }
         }
 
-        internal static bool IsNodeAlive(DialogueGraph graph, DialogueNode node) =>
+        internal static bool IsNodeAlive(DialogueGraph graph, DialogueNodeData node) =>
             node != null && graph?.NodeList != null && graph.NodeList.Contains(node);
     }
 }

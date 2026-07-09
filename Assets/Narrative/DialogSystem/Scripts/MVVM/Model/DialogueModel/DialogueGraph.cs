@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MiMieMVVM;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace Miemie.DialogSystem
     /// 节点内嵌于本资产 一张图一个 SO
     /// </summary>
     [CreateAssetMenu(fileName = "New Dialogue Graph", menuName = "Dialog System/Dialogue Graph")]
-    public class DialogueGraph : ScriptableObject
+    public class DialogueGraph : ScriptableObject,IModelConfig
     {
         #region 字段
         /// <summary> 对话图ID </summary>
@@ -26,34 +27,34 @@ namespace Miemie.DialogSystem
 
         /// <summary> 节点列表 </summary>
         [SerializeField]
-        private List<DialogueNode> nodeList = new();
+        private List<DialogueNodeData> nodeList = new();
 
         /// <summary> 图变量声明 </summary>
         [SerializeField, HideInInspector]
-        private List<DialogueVariableDef> variableList = new();
+        private List<DialogueVariableData> variableList = new();
         #endregion
 
         #region 属性
-        public int GraphId => graphId;
-        public string GraphName => graphName;
+        public int ConfigId => graphId;
+        public string Name => graphName;
         public int StartNodeId => startNodeId;
-        public DialogueNode StartNode => FindNode(startNodeId);
-        public List<DialogueNode> NodeList => nodeList;
-        public List<DialogueVariableDef> Variables => variableList;
+        public DialogueNodeData StartNode => FindNode(startNodeId);
+        public List<DialogueNodeData> NodeList => nodeList;
+        public List<DialogueVariableData> VariableList => variableList;
         #endregion
 
         #region 方法
         /// <summary>
         /// 按 ID 查找节点
         /// </summary>
-        public DialogueNode FindNode(int nodeId)
+        public DialogueNodeData FindNode(int nodeId)
         {
             if (nodeId == 0 || nodeList == null)
                 return null;
 
             foreach (var node in nodeList)
             {
-                if (node != null && node.NodeId == nodeId)
+                if (node != null && node.ConfigId == nodeId)
                     return node;
             }
 
@@ -63,17 +64,17 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 添加节点
         /// </summary>
-        public void AddNode(DialogueNode node)
+        public void AddNode(DialogueNodeData node)
         {
             if (nodeList is null)
-                nodeList = new List<DialogueNode>();
+                nodeList = new List<DialogueNodeData>();
             nodeList.Add(node);
         }
 
         /// <summary>
         /// 删除节点
         /// </summary>
-        public void RemoveNode(DialogueNode node)
+        public void RemoveNode(DialogueNodeData node)
         {
             if (nodeList is null)
             {
@@ -84,17 +85,17 @@ namespace Miemie.DialogSystem
         }
 
         /// <summary>
-        /// 查找变量声明
+        /// 查找黑板变量
         /// </summary>
-        public DialogueVariableDef FindVariable(string variableName)
+        public DialogueVariableData FindBlackBoardVariable(string variableName)
         {
             if (string.IsNullOrEmpty(variableName) || variableList == null)
                 return null;
 
-            foreach (var def in variableList)
+            foreach (var item in variableList)
             {
-                if (def != null && def.name == variableName)
-                    return def;
+                if (item != null && item.name == variableName)
+                    return item;
             }
 
             return null;
@@ -104,9 +105,9 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 设置开始节点
         /// </summary>
-        public void SetStartNodeInEditorWindow(DialogueNode node)
+        public void SetStartNodeInEditorWindow(DialogueNodeData node)
         {
-            startNodeId = node?.NodeId ?? 0;
+            startNodeId = node?.ConfigId ?? 0;
         }
 #endif
         #endregion

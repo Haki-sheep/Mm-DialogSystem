@@ -16,7 +16,7 @@ MonoBehaviour:
   graphName: 
   startNodeId: 0
   nodeList:
-  - nodeId: 1
+  - nodeConfigId: 0
     speakType: 0
     speakerName: "\u8282\u70B91"
     dialogText: 
@@ -25,9 +25,13 @@ MonoBehaviour:
       labelText: 
       eventKey: 
       toNodeId: 2
-      conditionList: []
+      conditionList:
+      - variableName: TestVari
+        eCondition: 1
+        targetFloat: 0
+        targetInt: 0
     choiceList: []
-  - nodeId: 2
+  - nodeConfigId: 0
     speakType: 0
     speakerName: "\u8282\u70B92"
     dialogText: 

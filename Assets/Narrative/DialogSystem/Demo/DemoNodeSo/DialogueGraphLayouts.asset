@@ -15,20 +15,9 @@ MonoBehaviour:
   graphs:
   - graph: {fileID: 11400000, guid: 1a6b0eaf39c5bb84e839e26f36bba3e8, type: 2}
     layouts:
-    - nodeId: 0
-      hasPosition: 1
-      position: {x: 260, y: 80}
-  - graph: {fileID: 11400000, guid: a1b2c3d4e5f6478899aabbccddeeff01, type: 2}
-    layouts:
-    - nodeId: 3
-      hasPosition: 1
-      position: {x: 530.2857, y: -6.285713}
-    - nodeId: 4
-      hasPosition: 1
-      position: {x: 530.2857, y: 147.42857}
     - nodeId: 1
       hasPosition: 1
-      position: {x: -5.142853, y: 80}
+      position: {x: 207.99997, y: 312.5714}
     - nodeId: 2
       hasPosition: 1
-      position: {x: 260, y: 80}
+      position: {x: 357.71426, y: 312.5714}

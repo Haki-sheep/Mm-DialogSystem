@@ -132,8 +132,8 @@ namespace Miemie.DialogSystem.Editor
         {
             var model = new DialogueGraphJson
             {
-                graphId = graph.GraphId,
-                graphName = graph.GraphName,
+                graphId = graph.ConfigId,
+                graphName = graph.Name,
                 assetName = graph.name,
                 assetPath = AssetDatabase.GetAssetPath(graph),
                 startNodeId = graph.StartNodeId,
@@ -148,9 +148,9 @@ namespace Miemie.DialogSystem.Editor
                 }
             }
 
-            if (graph.Variables != null)
+            if (graph.VariableList != null)
             {
-                foreach (var def in graph.Variables)
+                foreach (var def in graph.VariableList)
                 {
                     if (def == null)
                         continue;
@@ -169,14 +169,14 @@ namespace Miemie.DialogSystem.Editor
             return model;
         }
 
-        static DialogueNodeJson ToNodeModel(DialogueGraph graph, DialogueNode node)
+        static DialogueNodeJson ToNodeModel(DialogueGraph graph, DialogueNodeData node)
         {
             if (!DialogueGraphLayoutStore.TryGetPosition(graph, node, out var layout))
                 layout = Vector2.zero;
 
             var nodeJson = new DialogueNodeJson
             {
-                nodeId = node.NodeId,
+                nodeId = node.ConfigId,
                 assetName = node.SpeakerName,
                 speakType = node.SpeakType.ToString(),
                 speakerName = node.SpeakerName,
@@ -210,7 +210,7 @@ namespace Miemie.DialogSystem.Editor
             return nodeJson;
         }
 
-        static List<DialogueConditionJson> ToConditionsModel(List<DialogueCondition> conditions)
+        static List<DialogueConditionJson> ToConditionsModel(List<DialogueConditionData> conditions)
         {
             var result = new List<DialogueConditionJson>();
             if (conditions == null)
@@ -226,7 +226,7 @@ namespace Miemie.DialogSystem.Editor
             return result;
         }
 
-        static DialogueConditionJson ToConditionModel(DialogueCondition condition)
+        static DialogueConditionJson ToConditionModel(DialogueConditionData condition)
         {
             if (condition == null)
                 return new DialogueConditionJson { conditionType = ECondition.None.ToString() };
@@ -254,26 +254,26 @@ namespace Miemie.DialogSystem.Editor
 
         static void ApplyModel(DialogueGraph graph, DialogueGraphJson model)
         {
-            var existingById = new Dictionary<int, DialogueNode>();
+            var existingById = new Dictionary<int, DialogueNodeData>();
             if (graph.NodeList != null)
             {
                 foreach (var node in graph.NodeList)
                 {
                     if (node != null)
-                        existingById[node.NodeId] = node;
+                        existingById[node.ConfigId] = node;
                 }
 
                 graph.NodeList.Clear();
             }
 
-            var idMap = new Dictionary<int, DialogueNode>();
+            var idMap = new Dictionary<int, DialogueNodeData>();
             foreach (var nodeJson in model.nodes)
             {
                 if (nodeJson == null)
                     continue;
 
                 if (!existingById.TryGetValue(nodeJson.nodeId, out var node))
-                    node = new DialogueNode();
+                    node = new DialogueNodeData();
 
                 ApplyNodeScalars(node, nodeJson);
                 graph.AddNode(node);
@@ -298,7 +298,7 @@ namespace Miemie.DialogSystem.Editor
             ApplyVariables(graphSo.FindProperty("variableList"), model.variables);
             graphSo.ApplyModifiedPropertiesWithoutUndo();
 
-            var importedLayouts = new List<(DialogueNode node, Vector2 position)>();
+            var importedLayouts = new List<(DialogueNodeData node, Vector2 position)>();
             foreach (var nodeJson in model.nodes)
             {
                 if (nodeJson == null || !idMap.TryGetValue(nodeJson.nodeId, out var node))
@@ -314,7 +314,7 @@ namespace Miemie.DialogSystem.Editor
             EditorUtility.SetDirty(graph);
         }
 
-        static void ApplyNodeScalars(DialogueNode node, DialogueNodeJson data)
+        static void ApplyNodeScalars(DialogueNodeData node, DialogueNodeJson data)
         {
             node.SetNodeId(data.nodeId);
             node.SetSpeakerName(data.speakerName ?? string.Empty);
@@ -327,7 +327,7 @@ namespace Miemie.DialogSystem.Editor
                 node.SetSpeakType(speakType);
         }
 
-        static void ApplyNextTransition(DialogueNode node, DialogueNodeJson data)
+        static void ApplyNextTransition(DialogueNodeData node, DialogueNodeJson data)
         {
             node.NextTransition.toNodeId = data.nextNodeId;
             node.NextTransition.ConditionList.Clear();
@@ -338,7 +338,7 @@ namespace Miemie.DialogSystem.Editor
             }
         }
 
-        static void ApplyChoices(DialogueNode node, List<DialogueTransitionJson> choices)
+        static void ApplyChoices(DialogueNodeData node, List<DialogueTransitionJson> choices)
         {
             node.ClearChoices();
             if (choices == null)
@@ -349,7 +349,7 @@ namespace Miemie.DialogSystem.Editor
                 if (choice == null)
                     continue;
 
-                var transition = new DialogueTransition
+                var transition = new DialogueTransLineData
                 {
                     labelText = choice.labelText ?? string.Empty,
                     toNodeId = choice.toNodeId,
@@ -365,13 +365,13 @@ namespace Miemie.DialogSystem.Editor
             }
         }
 
-        static DialogueCondition FromConditionJson(DialogueConditionJson conditionJson)
+        static DialogueConditionData FromConditionJson(DialogueConditionJson conditionJson)
         {
             var conditionType = ECondition.None;
             if (!string.IsNullOrEmpty(conditionJson.conditionType))
                 System.Enum.TryParse(conditionJson.conditionType, out conditionType);
 
-            return new DialogueCondition
+            return new DialogueConditionData
             {
                 eCondition = conditionType,
                 variableName = conditionJson.variableName ?? string.Empty,

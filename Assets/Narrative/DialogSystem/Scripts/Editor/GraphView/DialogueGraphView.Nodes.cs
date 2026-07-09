@@ -82,7 +82,7 @@ namespace Miemie.DialogSystem.Editor
             }
         }
 
-        DialogueNodeView CreateNodeView(DialogueNode node, Vector2 position)
+        DialogueNodeView CreateNodeView(DialogueNodeData node, Vector2 position)
         {
             var view = new DialogueNodeView(node, currentGraph);
             view.SetPosition(new Rect(position, new Vector2(DefaultNodeWidth, DefaultNodeHeight)));
@@ -105,7 +105,7 @@ namespace Miemie.DialogSystem.Editor
             return view;
         }
 
-        void SetStartNode(DialogueNode node)
+        void SetStartNode(DialogueNodeData node)
         {
             if (currentGraph == null || node == null)
                 return;
@@ -115,7 +115,7 @@ namespace Miemie.DialogSystem.Editor
             HighlightStartNode();
         }
 
-        void AddChoicePort(DialogueNode node, DialogueNodeView view)
+        void AddChoicePort(DialogueNodeData node, DialogueNodeView view)
         {
             if (node == null || !node.IsOptionNode)
                 return;
@@ -124,7 +124,7 @@ namespace Miemie.DialogSystem.Editor
             view.SyncChoicePorts();
         }
 
-        void RemoveLastChoicePort(DialogueNode node)
+        void RemoveLastChoicePort(DialogueNodeData node)
         {
             if (node == null || !node.IsOptionNode)
                 return;
@@ -157,7 +157,7 @@ namespace Miemie.DialogSystem.Editor
             ownerWindow.ResetSelectionSync();
         }
 
-        public void SelectNode(DialogueNode node)
+        public void SelectNode(DialogueNodeData node)
         {
             if (node == null || !nodeViews.TryGetValue(node, out var view))
                 return;
@@ -169,7 +169,7 @@ namespace Miemie.DialogSystem.Editor
             });
         }
 
-        public void FocusNode(DialogueNode node)
+        public void FocusNode(DialogueNodeData node)
         {
             if (node == null || !nodeViews.TryGetValue(node, out var view))
                 return;
@@ -274,7 +274,7 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            if (selected is DialogueNode node)
+            if (selected is DialogueNodeData node)
             {
                 var graphForNode = ownerWindow.FindGraphForNode(node);
                 if (graphForNode == null)

@@ -9,9 +9,9 @@ namespace Miemie.DialogSystem.Editor
     public class DialogueTransitionHandle
     {
         public DialogueGraph graph;
-        public DialogueNode sourceNode;
-        public DialogueNode targetNode;
-        public DialogueTransition choiceTransition;
+        public DialogueNodeData sourceNode;
+        public DialogueNodeData targetNode;
+        public DialogueTransLineData choiceTransition;
 
         public bool IsOptionTransition => choiceTransition != null;
 
@@ -19,8 +19,8 @@ namespace Miemie.DialogSystem.Editor
         {
             get
             {
-                string from = sourceNode != null ? $"[{sourceNode.NodeId}]" : "?";
-                string to = targetNode != null ? $"[{targetNode.NodeId}]" : "?";
+                string from = sourceNode != null ? $"[{sourceNode.ConfigId}]" : "?";
+                string to = targetNode != null ? $"[{targetNode.ConfigId}]" : "?";
                 return IsOptionTransition ? $"{from} 选项 → {to}" : $"{from} → {to}";
             }
         }

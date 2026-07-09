@@ -48,6 +48,7 @@ namespace Miemie.DialogSystem
     /// </summary>
     public static void DialogueEvent(DialogueGraph graph, string eventKey)
     {
+      // 发布事件
       NarrativeEventBusProvider.Instance?.Publish(
         NarrativeEvents.DialogueTriggered,
         new DialogueFinishedEventData { graph = graph, eventKey = eventKey });

@@ -5,11 +5,10 @@ using UnityEngine;
 namespace Miemie.DialogSystem
 {
     /// <summary>
-    /// 对话条件
-    /// 连线上的一条判断规则
+    /// 点开连线上面有一个Conditions ,其中的一条数据就是该类
     /// </summary>
     [Serializable]
-    public class DialogueCondition
+    public class DialogueConditionData
     {
         /// <summary> 变量名 </summary>
         public string variableName;
@@ -36,7 +35,7 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 判断条件是否满足
         /// </summary>
-        public bool MeetCondition(DialogueVariablesStore variables)
+        public bool MeetCondition(DialogueVariablesBlackBoard variables)
         {
             if (NoneContion || variables == null)
                 return true;

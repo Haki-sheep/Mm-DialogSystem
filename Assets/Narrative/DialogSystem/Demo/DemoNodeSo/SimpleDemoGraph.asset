@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0250bb1ed372d4989b5fa2d62966f5, type: 3}
+  m_Name: SimpleDemoGraph
+  m_EditorClassIdentifier: 
+  graphId: 1001
+  graphName: SimpleDemo
+  startNodeId: 1
+  nodeList:
+  - nodeConfigId: 1
+    speakType: 2
+    speakerName: "NPC"
+    dialogText: "\u4F60\u597D \u6211\u662F\u7B80\u5355Demo\u5BF9\u8BDD \u6309\u7A7A\u683C\u7EE7\u7EED"
+    isOptionNode: 0
+    nextTransition:
+      labelText: 
+      eventKey: 
+      toNodeId: 2
+      conditionList: []
+    choiceList: []
+  - nodeConfigId: 2
+    speakType: 2
+    speakerName: "NPC"
+    dialogText: "\u8BF7\u9009\u62E9\u4E00\u4E2A\u7B54\u6848"
+    isOptionNode: 1
+    nextTransition:
+      labelText: 
+      eventKey: 
+      toNodeId: 0
+      conditionList: []
+    choiceList:
+    - labelText: "\u9009\u98791 \u53BB\u7ED3\u5C3EA"
+      eventKey: demo_choice_a
+      toNodeId: 3
+      conditionList: []
+    - labelText: "\u9009\u98792 \u53BB\u7ED3\u5C3EB"
+      eventKey: demo_choice_b
+      toNodeId: 4
+      conditionList: []
+  - nodeConfigId: 3
+    speakType: 2
+    speakerName: "NPC"
+    dialogText: "\u4F60\u9009\u4E86A \u5BF9\u8BDD\u7ED3\u675F"
+    isOptionNode: 0
+    nextTransition:
+      labelText: 
+      eventKey: 
+      toNodeId: 0
+      conditionList: []
+    choiceList: []
+  - nodeConfigId: 4
+    speakType: 2
+    speakerName: "NPC"
+    dialogText: "\u4F60\u9009\u4E86B \u5BF9\u8BDD\u7ED3\u675F"
+    isOptionNode: 0
+    nextTransition:
+      labelText: 
+      eventKey: 
+      toNodeId: 0
+      conditionList: []
+    choiceList: []
+  variableList: []

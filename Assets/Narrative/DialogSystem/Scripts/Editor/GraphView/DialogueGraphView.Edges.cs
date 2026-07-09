@@ -58,7 +58,7 @@ namespace Miemie.DialogSystem.Editor
                 int portIndex = sourceView.GetOutputPortIndex(edge.output);
                 EnsureChoiceCount(sourceNode, portIndex + 1);
                 var choice = sourceNode.ChoiceList[portIndex];
-                choice.toNodeId = targetNode.NodeId;
+                choice.toNodeId = targetNode.ConfigId;
                 edge.userData = choice;
                 sourceView.SyncChoicePorts();
             }
@@ -83,7 +83,7 @@ namespace Miemie.DialogSystem.Editor
 
             var sourceNode = sourceView.Node;
 
-            if (sourceNode.IsOptionNode && edge.userData is DialogueTransition choice)
+            if (sourceNode.IsOptionNode && edge.userData is DialogueTransLineData choice)
             {
                 foreach (var item in sourceNode.ChoiceList)
                 {
@@ -169,14 +169,14 @@ namespace Miemie.DialogSystem.Editor
             });
         }
 
-        static void EnsureChoiceCount(DialogueNode node, int count)
+        static void EnsureChoiceCount(DialogueNodeData node, int count)
         {
             if (node.ChoiceList == null)
                 return;
 
             while (node.ChoiceList.Count < count)
             {
-                node.AddChoice(new DialogueTransition
+                node.AddChoice(new DialogueTransLineData
                 {
                     labelText = $"选项{node.ChoiceList.Count + 1}",
                 });

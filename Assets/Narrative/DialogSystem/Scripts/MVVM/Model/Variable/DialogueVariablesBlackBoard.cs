@@ -4,9 +4,9 @@ using Sirenix.Serialization;
 namespace Miemie.DialogSystem
 {
     /// <summary>
-    /// 对话变量运行时存储
+    /// 对话图上的黑板
     /// </summary>
-    public class DialogueVariablesStore
+    public class DialogueVariablesBlackBoard
     {
         [OdinSerialize]
         private Dictionary<string, bool> boolDict = new();
@@ -20,26 +20,26 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 用变量声明初始化默认值
         /// </summary>
-        public void ApplyDefaults(IReadOnlyList<DialogueVariableDef> variableList)
+        public void InitDefaultVariables(IReadOnlyList<DialogueVariableData> variableList)
         {
             if (variableList == null)
                 return;
 
-            foreach (var def in variableList)
+            foreach (var item in variableList)
             {
-                if (def == null || string.IsNullOrEmpty(def.name))
+                if (item == null || string.IsNullOrEmpty(item.name))
                     continue;
 
-                switch (def.variableType)
+                switch (item.variableType)
                 {
                     case EDialogueVariableType.Float:
-                        SetFloat(def.name, def.defaultFloat);
+                        SetFloat(item.name, item.defaultFloat);
                         break;
                     case EDialogueVariableType.Int:
-                        SetInt(def.name, def.defaultInt);
+                        SetInt(item.name, item.defaultInt);
                         break;
                     case EDialogueVariableType.Bool:
-                        SetBool(def.name, def.defaultBool);
+                        SetBool(item.name, item.defaultBool);
                         break;
                 }
             }

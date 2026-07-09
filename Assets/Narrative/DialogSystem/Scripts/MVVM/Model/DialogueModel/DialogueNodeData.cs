@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MiMieMVVM;
 using UnityEngine;
 
 namespace Miemie.DialogSystem
@@ -7,12 +8,11 @@ namespace Miemie.DialogSystem
     /// 对话节点数据 内嵌于 DialogueGraph
     /// </summary>
     [System.Serializable]
-    public class DialogueNode
+    public class DialogueNodeData : IModelConfig
     {
-        #region 字段
         /// <summary> 节点ID </summary>
         [SerializeField]
-        private int nodeId;
+        private int nodeConfigId;
 
         /// <summary> 说话类型 </summary>
         [SerializeField]
@@ -32,30 +32,28 @@ namespace Miemie.DialogSystem
 
         /// <summary> 普通节点下一跳 </summary>
         [SerializeField]
-        private DialogueTransition nextTransition = new();
+        private DialogueTransLineData nextTransition = new();
 
         /// <summary> 选项出口 </summary>
         [SerializeField]
-        private List<DialogueTransition> choiceList = new();
-        #endregion
-
-        #region 属性
-        public int NodeId => nodeId;
+        private List<DialogueTransLineData> choiceList = new();
+  
+        public int ConfigId => nodeConfigId;
+        public string Name => nodeConfigId.ToString();
         public SpeakEnums SpeakType => speakType;
         public string SpeakerName => speakerName;
         public string DialogText { get => dialogText; set => dialogText = value; }
         public bool IsOptionNode { get => isOptionNode; set => isOptionNode = value; }
-        public DialogueTransition NextTransition
+        public DialogueTransLineData NextTransition
         {
             get
             {
                 if (nextTransition == null)
-                    nextTransition = new DialogueTransition();
+                    nextTransition = new DialogueTransLineData();
                 return nextTransition;
             }
         }
-        public List<DialogueTransition> ChoiceList => choiceList;
-        #endregion
+        public List<DialogueTransLineData> ChoiceList => choiceList;
 
         #region 方法
         /// <summary>
@@ -72,18 +70,18 @@ namespace Miemie.DialogSystem
             if (NextTransition.toNodeId == 0)
                 Debug.LogWarning("Node is Over");
             else if (graph != null && graph.FindNode(NextTransition.toNodeId) == null)
-                Debug.LogWarning($"Node [{nodeId}] next target {NextTransition.toNodeId} not found");
+                Debug.LogWarning($"Node [{nodeConfigId}] next target {NextTransition.toNodeId} not found");
         }
 
         /// <summary>
         /// 设置下一节点
         /// </summary>
-        public void SetNextNode(DialogueNode node)
+        public void SetNextNode(DialogueNodeData node)
         {
             if (nextTransition == null)
-                nextTransition = new DialogueTransition();
+                nextTransition = new DialogueTransLineData();
 
-            nextTransition.toNodeId = node?.NodeId ?? 0;
+            nextTransition.toNodeId = node?.ConfigId ?? 0;
         }
 
         /// <summary>
@@ -98,17 +96,17 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 添加选项节点
         /// </summary>
-        public void AddChoice(DialogueTransition choice)
+        public void AddChoice(DialogueTransLineData choice)
         {
             if (choiceList is null)
-                choiceList = new List<DialogueTransition>();
+                choiceList = new List<DialogueTransLineData>();
             choiceList.Add(choice);
         }
 
         /// <summary>
         /// 移除选项
         /// </summary>
-        public void RemoveChoice(DialogueTransition choice)
+        public void RemoveChoice(DialogueTransLineData choice)
         {
             if (choiceList is not null)
                 choiceList.Remove(choice);
@@ -129,7 +127,7 @@ namespace Miemie.DialogSystem
         /// <summary>
         /// 获取选项
         /// </summary>
-        public DialogueTransition GetChoice(int index)
+        public DialogueTransLineData GetChoice(int index)
         {
             if (choiceList is not null && index >= 0 && index < choiceList.Count)
                 return choiceList[index];
@@ -145,19 +143,11 @@ namespace Miemie.DialogSystem
                 choiceList.Clear();
         }
 
-        /// <summary>
-        /// 播放节点
-        /// </summary>
-        public void PlayNode()
-        {
-            Debug.Log($"[{nodeId}] {speakerName}: {dialogText}");
-        }
-
 #if UNITY_EDITOR
         /// <summary>
         /// 编辑器设置节点ID
         /// </summary>
-        public void SetNodeId(int id) => nodeId = id;
+        public void SetNodeId(int id) => nodeConfigId = id;
 
         /// <summary>
         /// 编辑器设置说话类型

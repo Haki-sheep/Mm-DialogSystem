@@ -41,12 +41,12 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 删除图内单个节点
         /// </summary>
-        public static bool TryDeleteNode(DialogueGraph graph, DialogueNode node)
+        public static bool TryDeleteNode(DialogueGraph graph, DialogueNodeData node)
         {
             if (graph == null || node == null)
                 return false;
 
-            int nodeId = node.NodeId;
+            int nodeId = node.ConfigId;
             if (!EditorUtility.DisplayDialog(
                     "删除节点",
                     $"确定删除节点 [{nodeId}] {node.SpeakerName} 吗\n此操作不可撤销",
@@ -60,11 +60,11 @@ namespace Miemie.DialogSystem.Editor
             return true;
         }
 
-        static void DeleteNodeInternal(DialogueGraph graph, DialogueNode node)
+        static void DeleteNodeInternal(DialogueGraph graph, DialogueNodeData node)
         {
             ClearReferencesToNode(graph, node);
 
-            if (graph.StartNodeId == node.NodeId)
+            if (graph.StartNodeId == node.ConfigId)
                 graph.SetStartNodeInEditorWindow(null);
 
             graph.RemoveNode(node);
@@ -72,7 +72,7 @@ namespace Miemie.DialogSystem.Editor
             EditorUtility.SetDirty(graph);
         }
 
-        static void ClearReferencesToNode(DialogueGraph graph, DialogueNode target)
+        static void ClearReferencesToNode(DialogueGraph graph, DialogueNodeData target)
         {
             if (graph?.NodeList == null)
                 return;
@@ -82,7 +82,7 @@ namespace Miemie.DialogSystem.Editor
                 if (node == null || node == target)
                     continue;
 
-                if (node.NextTransition?.toNodeId == target.NodeId)
+                if (node.NextTransition?.toNodeId == target.ConfigId)
                     node.ClearNextNode();
 
                 if (node.ChoiceList == null)
@@ -90,7 +90,7 @@ namespace Miemie.DialogSystem.Editor
 
                 foreach (var choice in node.ChoiceList)
                 {
-                    if (choice != null && choice.toNodeId == target.NodeId)
+                    if (choice != null && choice.toNodeId == target.ConfigId)
                         choice.toNodeId = 0;
                 }
             }

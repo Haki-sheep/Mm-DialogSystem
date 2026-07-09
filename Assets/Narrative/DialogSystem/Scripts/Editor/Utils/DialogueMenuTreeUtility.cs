@@ -6,10 +6,10 @@ namespace Miemie.DialogSystem.Editor
     /// </summary>
     static class DialogueMenuTreeUtility
     {
-        public static string BuildNodeHeader(DialogueNode node)
+        public static string BuildNodeHeader(DialogueNodeData node)
         {
             string speaker = string.IsNullOrEmpty(node.SpeakerName) ? "(空)" : node.SpeakerName;
-            return $"[{node.NodeId}] {speaker}";
+            return $"[{node.ConfigId}] {speaker}";
         }
 
         public static string SanitizeMenuPath(string path)

@@ -12,7 +12,7 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 查找节点在 nodeList 中的序列化属性
         /// </summary>
-        public static SerializedProperty FindNodeProperty(DialogueGraph graph, DialogueNode node, out SerializedObject graphSo)
+        public static SerializedProperty FindNodeProperty(DialogueGraph graph, DialogueNodeData node, out SerializedObject graphSo)
         {
             graphSo = new SerializedObject(graph);
             var list = graphSo.FindProperty("nodeList");
@@ -22,7 +22,7 @@ namespace Miemie.DialogSystem.Editor
             for (int i = 0; i < list.arraySize; i++)
             {
                 var elem = list.GetArrayElementAtIndex(i);
-                if (elem.FindPropertyRelative("nodeId").intValue == node.NodeId)
+                if (elem.FindPropertyRelative("nodeId").intValue == node.ConfigId)
                     return elem;
             }
 

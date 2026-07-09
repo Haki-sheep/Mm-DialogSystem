@@ -10,7 +10,7 @@ namespace Miemie.DialogSystem
     /// labelText 仅选项出口使用
     /// </summary>
     [Serializable]
-    public class DialogueTransition
+    public class DialogueTransLineData
     {
         /// <summary> 选项文本 普通跳转可留空 </summary>
         public string labelText;
@@ -23,19 +23,19 @@ namespace Miemie.DialogSystem
 
         /// <summary> 条件列表 </summary>
         [SerializeField]
-        List<DialogueCondition> conditionList = new();
+        List<DialogueConditionData> conditionList = new();
 
-        public List<DialogueCondition> ConditionList => conditionList;
+        public List<DialogueConditionData> ConditionList => conditionList;
 
         /// <summary>
         /// 解析目标节点
         /// </summary>
-        public DialogueNode ResolveToNode(DialogueGraph graph) => graph?.FindNode(toNodeId);
+        public DialogueNodeData ResolveToNode(DialogueGraph graph) => graph?.FindNode(toNodeId);
 
         /// <summary>
         /// 判断跳转是否可通过
         /// </summary>
-        public bool CanPass(DialogueVariablesStore variables)
+        public bool CanPass(DialogueVariablesBlackBoard variables)
         {
             if (conditionList == null || conditionList.Count == 0)
                 return true;

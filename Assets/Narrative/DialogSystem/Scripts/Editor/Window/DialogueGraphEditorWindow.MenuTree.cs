@@ -129,8 +129,8 @@ namespace Miemie.DialogSystem.Editor
             return tree;
         }
 
-        static string BuildNodeMenuPath(string basePath, DialogueNode node) =>
-            $"{basePath}/[{node.NodeId}] {DialogueMenuTreeUtility.SanitizeMenuPath(node.SpeakerName)}";
+        static string BuildNodeMenuPath(string basePath, DialogueNodeData node) =>
+            $"{basePath}/[{node.ConfigId}] {DialogueMenuTreeUtility.SanitizeMenuPath(node.SpeakerName)}";
 
         void RefreshMenuLabelsIfNeeded()
         {
@@ -150,7 +150,7 @@ namespace Miemie.DialogSystem.Editor
                     continue;
                 }
 
-                if (item.Value is not DialogueNode node)
+                if (item.Value is not DialogueNodeData node)
                     continue;
 
                 var parentGraph = nodeToGraph.TryGetValue(node, out var g) ? g : null;

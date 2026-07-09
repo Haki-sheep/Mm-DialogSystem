@@ -138,8 +138,8 @@ namespace Miemie.DialogSystem.Editor
             foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(DialogueGraph)}"))
             {
                 var graph = AssetDatabase.LoadAssetAtPath<DialogueGraph>(AssetDatabase.GUIDToAssetPath(guid));
-                if (graph != null && graph.GraphId > maxId)
-                    maxId = graph.GraphId;
+                if (graph != null && graph.ConfigId > maxId)
+                    maxId = graph.ConfigId;
             }
 
             return maxId + 1;

@@ -39,8 +39,8 @@ namespace Miemie.DialogSystem.Editor
         bool graphSelectionUpdateScheduled;
         object pendingGraphSelection;
 
-        readonly Dictionary<DialogueNode, DialogueGraph> nodeToGraph = new();
-        readonly Dictionary<DialogueNode, string> nodeLabelCache = new();
+        readonly Dictionary<DialogueNodeData, DialogueGraph> nodeToGraph = new();
+        readonly Dictionary<DialogueNodeData, string> nodeLabelCache = new();
 
         internal OdinMenuTree MenuTree => menuTree;
         internal OdinMenuTree MenuTreeAccessor => menuTree;

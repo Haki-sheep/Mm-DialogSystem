@@ -17,7 +17,7 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 尝试读取节点坐标
         /// </summary>
-        public static bool TryGetPosition(DialogueGraph graph, DialogueNode node, out Vector2 position)
+        public static bool TryGetPosition(DialogueGraph graph, DialogueNodeData node, out Vector2 position)
         {
             position = Vector2.zero;
             if (graph == null || node == null)
@@ -29,7 +29,7 @@ namespace Miemie.DialogSystem.Editor
 
             foreach (var layout in entry.layouts)
             {
-                if (layout.nodeId != node.NodeId || !layout.hasPosition)
+                if (layout.nodeId != node.ConfigId || !layout.hasPosition)
                     continue;
 
                 position = layout.position;
@@ -39,10 +39,10 @@ namespace Miemie.DialogSystem.Editor
             return false;
         }
 
-        public static Vector2 GetPosition(DialogueGraph graph, DialogueNode node) =>
+        public static Vector2 GetPosition(DialogueGraph graph, DialogueNodeData node) =>
             TryGetPosition(graph, node, out var position) ? position : Vector2.zero;
 
-        public static void SetPosition(DialogueGraph graph, DialogueNode node, Vector2 position)
+        public static void SetPosition(DialogueGraph graph, DialogueNodeData node, Vector2 position)
         {
             if (graph == null || node == null)
                 return;
@@ -50,7 +50,7 @@ namespace Miemie.DialogSystem.Editor
             var entry = GetGraphEntry(graph, create: true);
             foreach (var layout in entry.layouts)
             {
-                if (layout.nodeId != node.NodeId)
+                if (layout.nodeId != node.ConfigId)
                     continue;
 
                 layout.hasPosition = true;
@@ -61,14 +61,14 @@ namespace Miemie.DialogSystem.Editor
 
             entry.layouts.Add(new NodeLayoutEntry
             {
-                nodeId = node.NodeId,
+                nodeId = node.ConfigId,
                 hasPosition = true,
                 position = position,
             });
             SaveDatabase();
         }
 
-        public static void RemoveNode(DialogueGraph graph, DialogueNode node)
+        public static void RemoveNode(DialogueGraph graph, DialogueNodeData node)
         {
             if (graph == null || node == null)
                 return;
@@ -77,7 +77,7 @@ namespace Miemie.DialogSystem.Editor
             if (entry == null)
                 return;
 
-            entry.layouts.RemoveAll(e => e.nodeId == node.NodeId);
+            entry.layouts.RemoveAll(e => e.nodeId == node.ConfigId);
             SaveDatabase();
         }
 
@@ -94,7 +94,7 @@ namespace Miemie.DialogSystem.Editor
             SaveDatabase();
         }
 
-        public static void ReplaceGraphLayouts(DialogueGraph graph, IEnumerable<(DialogueNode node, Vector2 position)> layouts)
+        public static void ReplaceGraphLayouts(DialogueGraph graph, IEnumerable<(DialogueNodeData node, Vector2 position)> layouts)
         {
             if (graph == null)
                 return;
@@ -111,7 +111,7 @@ namespace Miemie.DialogSystem.Editor
 
                     entry.layouts.Add(new NodeLayoutEntry
                     {
-                        nodeId = node.NodeId,
+                        nodeId = node.ConfigId,
                         hasPosition = true,
                         position = position,
                     });

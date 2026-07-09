@@ -37,7 +37,7 @@ namespace Miemie.DialogSystem.Editor
                         sb.AppendLine("[错误] nodeList 中有空引用");
                         continue;
                     }
-                    inGraph.Add(node.NodeId);
+                    inGraph.Add(node.ConfigId);
                 }
             }
 
@@ -58,12 +58,12 @@ namespace Miemie.DialogSystem.Editor
             Debug.Log(sb.ToString());
         }
 
-        static void ValidateNode(DialogueGraph graph, DialogueNode node, HashSet<int> inGraph, StringBuilder sb)
+        static void ValidateNode(DialogueGraph graph, DialogueNodeData node, HashSet<int> inGraph, StringBuilder sb)
         {
             if (node.IsOptionNode)
             {
                 if (node.ChoiceList == null || node.ChoiceList.Count == 0)
-                    sb.AppendLine($"[错误] 选项节点 [{node.NodeId}] choiceList 为空");
+                    sb.AppendLine($"[错误] 选项节点 [{node.ConfigId}] choiceList 为空");
                 else
                     ValidateChoices(node, inGraph, sb);
             }
@@ -71,18 +71,18 @@ namespace Miemie.DialogSystem.Editor
             {
                 int nextId = node.NextTransition?.toNodeId ?? 0;
                 if (nextId == 0)
-                    sb.AppendLine($"[提示] 节点 [{node.NodeId}] 无出口（可能是结局）");
+                    sb.AppendLine($"[提示] 节点 [{node.ConfigId}] 无出口（可能是结局）");
                 else if (!inGraph.Contains(nextId))
-                    sb.AppendLine($"[警告] [{node.NodeId}] → {nextId} 不在本图 nodeList");
+                    sb.AppendLine($"[警告] [{node.ConfigId}] → {nextId} 不在本图 nodeList");
             }
         }
 
-        static void ValidateChoices(DialogueNode node, HashSet<int> inGraph, StringBuilder sb)
+        static void ValidateChoices(DialogueNodeData node, HashSet<int> inGraph, StringBuilder sb)
         {
             foreach (var choice in node.ChoiceList)
             {
                 if (choice == null || choice.toNodeId == 0)
-                    sb.AppendLine($"[错误] [{node.NodeId}] 选项「{choice?.labelText}」无 toNodeId");
+                    sb.AppendLine($"[错误] [{node.ConfigId}] 选项「{choice?.labelText}」无 toNodeId");
                 else if (!inGraph.Contains(choice.toNodeId))
                     sb.AppendLine($"[警告] 选项 → {choice.toNodeId} 不在本图 nodeList");
             }

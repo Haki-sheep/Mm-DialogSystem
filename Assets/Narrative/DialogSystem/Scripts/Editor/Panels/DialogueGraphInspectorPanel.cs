@@ -57,11 +57,11 @@ namespace Miemie.DialogSystem.Editor
             if (selected is DialogueGraph graph && DialogueGraphEditorWindow.IsAssetAlive(graph))
                 return "Dialogue Graph";
 
-            if (selected is DialogueNode node)
+            if (selected is DialogueNodeData node)
             {
                 var parent = window.FindGraphForNode(node);
                 if (DialogueGraphEditorWindow.IsNodeAlive(parent, node))
-                    return $"Dialogue Node  ·  [{node.NodeId}] {node.SpeakerName}";
+                    return $"Dialogue Node  ·  [{node.ConfigId}] {node.SpeakerName}";
             }
 
             if (selected is UnityEngine.Object obj)
@@ -84,7 +84,7 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            if (selected is DialogueNode node)
+            if (selected is DialogueNodeData node)
             {
                 var parentGraph = window.FindGraphForNode(node);
                 if (!DialogueGraphEditorWindow.IsNodeAlive(parentGraph, node))
@@ -95,7 +95,7 @@ namespace Miemie.DialogSystem.Editor
             }
         }
 
-        static void DrawNodeInspector(DialogueGraphEditorWindow window, DialogueGraph graph, DialogueNode node)
+        static void DrawNodeInspector(DialogueGraphEditorWindow window, DialogueGraph graph, DialogueNodeData node)
         {
             var nodeProp = DialogueNodeEditorUtility.FindNodeProperty(graph, node, out var graphSo);
             if (nodeProp == null)
@@ -149,7 +149,7 @@ namespace Miemie.DialogSystem.Editor
 
         static void DrawDeleteButton(DialogueGraphEditorWindow window, object selected)
         {
-            if (selected is not DialogueGraph and not DialogueNode)
+            if (selected is not DialogueGraph and not DialogueNodeData)
                 return;
 
             EditorGUILayout.Space(12);
@@ -162,14 +162,14 @@ namespace Miemie.DialogSystem.Editor
             {
                 if (selected is DialogueGraph graph)
                     window.TryDeleteSelectedAsset(graph);
-                else if (selected is DialogueNode node)
+                else if (selected is DialogueNodeData node)
                     window.TryDeleteSelectedAsset(node);
             }
 
             GUI.backgroundColor = prevColor;
         }
 
-        static void DrawChoiceButtons(DialogueGraphEditorWindow window, DialogueNode node)
+        static void DrawChoiceButtons(DialogueGraphEditorWindow window, DialogueNodeData node)
         {
             EditorGUILayout.Space(6);
             EditorGUILayout.BeginHorizontal();

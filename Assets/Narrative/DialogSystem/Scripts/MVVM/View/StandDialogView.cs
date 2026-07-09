@@ -38,20 +38,28 @@ namespace Miemie.DialogSystem
         private float duration = 0.5f;
 
         /// <summary> 绑定 ViewModel </summary>
-        DialogueViewModel boundViewModel;
+        private DialogueViewModel boundViewModel;
 
-        /// <summary> 选项点击回调 </summary>
-        TextMeshProUGUI[] textMeshProUGUIList;
-        TextMeshProUGUI downPageText;
-        Tweener typewriterTween;
-        Tweener opCountDownTween;
+        /// <summary> 选项文本缓存 </summary>
+        private TextMeshProUGUI[] textMeshProUGUIList;
+
+        /// <summary> 下黑边文本 </summary>
+        private TextMeshProUGUI downPageText;
+
+        /// <summary> 打字机 Tween </summary>
+        private Tweener typewriterTween;
+
+        /// <summary> 选项倒计时 Tween </summary>
+        private Tweener opCountDownTween;
 
         public IViewModel ViewModel => boundViewModel;
 
-        RectTransform UpPageRectTransform => upPage.rectTransform;
-        RectTransform DownPageRectTransform => downPage.rectTransform;
+        private RectTransform UpPageRectTransform => upPage.rectTransform;
+        private RectTransform DownPageRectTransform => downPage.rectTransform;
 
-        void Awake()
+        #region 生命周期
+
+        private void Awake()
         {
             if (downPageText == null && downPage != null)
                 downPageText = downPage.GetComponentInChildren<TextMeshProUGUI>();
@@ -68,18 +76,42 @@ namespace Miemie.DialogSystem
             }
         }
 
-        void Start()
+        private void Start()
         {
             HidePage();
             MainImageHide();
         }
 
-        void OnDestroy()
+        private void Update()
+        {
+            if (boundViewModel == null) return;
+
+            var currentNode = boundViewModel.CurrentNode;
+            if (currentNode == null) return;
+
+            if (Input.GetKeyDown(KeyCode.Space))
+                boundViewModel.GoNext();
+
+            if (!currentNode.IsOptionNode) return;
+
+            var choices = boundViewModel.RuntimeModel.AvailableChoiceList;
+            for (int i = 0; i < choices.Count && i < 9; i++)
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                    boundViewModel.SelectOption(i);
+            }
+        }
+
+        private void OnDestroy()
         {
             Unbind();
             StopTypewriter();
             KillTweens();
         }
+
+        #endregion
+
+        #region 绑定
 
         /// <summary>
         /// 绑定 ViewModel
@@ -110,7 +142,11 @@ namespace Miemie.DialogSystem
             boundViewModel = null;
         }
 
-        void OnNodeChanged(DialogueNode node)
+        #endregion
+
+        #region VM事件
+
+        private void OnNodeChanged(DialogueNodeData node)
         {
             ShowPage();
             HideAllOptions();
@@ -118,7 +154,7 @@ namespace Miemie.DialogSystem
             SetTypewriterText($"{node.SpeakerName}\n{node.DialogText}");
         }
 
-        void OnOptionsChanged(IReadOnlyList<DialogueTransition> choices)
+        private void OnOptionsChanged(IReadOnlyList<DialogueTransLineData> choices)
         {
             HideAllOptions();
             if (choices == null || choices.Count == 0)
@@ -131,16 +167,20 @@ namespace Miemie.DialogSystem
             }
         }
 
-        void OnDialogEnded()
+        private void OnDialogEnded()
         {
             HideAllOptions();
             StopOpCountDown();
             HidePage();
         }
 
-        void OnOptionClicked(int index) => boundViewModel?.SelectOption(index);
+        private void OnOptionClicked(int index) => boundViewModel?.SelectOption(index);
 
-        void HideAllOptions()
+        #endregion
+
+        #region 选项
+
+        private void HideAllOptions()
         {
             if (optionButtonList == null)
                 return;
@@ -158,6 +198,41 @@ namespace Miemie.DialogSystem
             if (index < 0 || index >= textMeshProUGUIList.Length) return;
             textMeshProUGUIList[index].text = text;
         }
+
+        /// <summary>
+        /// 设置选项倒计时
+        /// </summary>
+        public void SetOpCountDown(float countDownTotalTime, Action onComplete = null)
+        {
+            StopOpCountDown();
+            opCountDownImage.gameObject.SetActive(true);
+            opCountDownImage.fillAmount = 1;
+
+            opCountDownTween = opCountDownImage
+                .DOFillAmount(0, countDownTotalTime)
+                .SetEase(Ease.Linear)
+                .OnComplete(() =>
+                {
+                    opCountDownImage.gameObject.SetActive(false);
+                    opCountDownTween = null;
+                    onComplete?.Invoke();
+                });
+        }
+
+        /// <summary>
+        /// 停止选项倒计时
+        /// </summary>
+        public void StopOpCountDown()
+        {
+            opCountDownImage.DOKill();
+            opCountDownTween?.Kill();
+            opCountDownTween = null;
+            opCountDownImage.gameObject.SetActive(false);
+        }
+
+        #endregion
+
+        #region 打字机
 
         /// <summary>
         /// 设置并立即显示整段文本
@@ -200,42 +275,15 @@ namespace Miemie.DialogSystem
         /// </summary>
         public void CompleteTypewriter() => typewriterTween?.Complete();
 
-        void StopTypewriter()
+        private void StopTypewriter()
         {
             downPageText?.DOKill();
             typewriterTween = null;
         }
 
-        /// <summary>
-        /// 设置选项倒计时
-        /// </summary>
-        public void SetOpCountDown(float countDownTotalTime, Action onComplete = null)
-        {
-            StopOpCountDown();
-            opCountDownImage.gameObject.SetActive(true);
-            opCountDownImage.fillAmount = 1;
+        #endregion
 
-            opCountDownTween = opCountDownImage
-                .DOFillAmount(0, countDownTotalTime)
-                .SetEase(Ease.Linear)
-                .OnComplete(() =>
-                {
-                    opCountDownImage.gameObject.SetActive(false);
-                    opCountDownTween = null;
-                    onComplete?.Invoke();
-                });
-        }
-
-        /// <summary>
-        /// 停止选项倒计时
-        /// </summary>
-        public void StopOpCountDown()
-        {
-            opCountDownImage.DOKill();
-            opCountDownTween?.Kill();
-            opCountDownTween = null;
-            opCountDownImage.gameObject.SetActive(false);
-        }
+        #region 页面动画
 
         /// <summary>
         /// 显示主画面
@@ -281,12 +329,14 @@ namespace Miemie.DialogSystem
             DownPageRectTransform.DOAnchorPos(new Vector2(DownPageRectTransform.anchoredPosition.x, DownHiddenY), duration).SetEase(Ease.InCubic);
         }
 
-        void KillTweens()
+        private void KillTweens()
         {
             UpPageRectTransform.DOKill();
             DownPageRectTransform.DOKill();
             mainImage.DOKill();
             StopOpCountDown();
         }
+
+        #endregion
     }
 }

@@ -21,7 +21,7 @@ namespace Miemie.DialogSystem.Editor
                 return;
             }
 
-            var dialogueNode = selected as DialogueNode;
+            var dialogueNode = selected as DialogueNodeData;
             if (dialogueNode != null && !IsNodeAlive(FindGraphForNode(dialogueNode), dialogueNode))
             {
                 ClearStaleSelectionInternal();
@@ -67,7 +67,7 @@ namespace Miemie.DialogSystem.Editor
         /// <summary>
         /// 新建节点后同步选中 避免残留已销毁引用
         /// </summary>
-        public void OnNodeCreated(DialogueNode node, DialogueGraph graph)
+        public void OnNodeCreated(DialogueNodeData node, DialogueGraph graph)
         {
             if (node == null || graph == null)
                 return;
@@ -154,7 +154,7 @@ namespace Miemie.DialogSystem.Editor
             graphView.schedule.Execute(() =>
             {
                 graphView.RefreshCurrentGraph(preserveView: true);
-                if (selected is DialogueNode node)
+                if (selected is DialogueNodeData node)
                     graphView.SelectNode(node);
             });
         }

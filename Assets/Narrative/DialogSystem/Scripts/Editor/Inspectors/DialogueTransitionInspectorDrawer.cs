@@ -120,7 +120,7 @@ namespace Miemie.DialogSystem.Editor
             string newName = DialogueGraphVariablesDrawer.DrawVariablePopup(graph, variableNameProp.stringValue);
             variableNameProp.stringValue = newName;
 
-            var variableDef = graph?.FindVariable(newName);
+            var variableDef = graph?.FindBlackBoardVariable(newName);
             if (variableDef == null)
             {
                 var current = (ECondition)typeProp.intValue;
@@ -156,19 +156,19 @@ namespace Miemie.DialogSystem.Editor
             conditionsProp.InsertArrayElementAtIndex(index);
             var conditionProp = conditionsProp.GetArrayElementAtIndex(index);
 
-            string defaultName = graph?.Variables != null && graph.Variables.Count > 0
-                ? graph.Variables[0]?.name ?? string.Empty
+            string defaultName = graph?.VariableList != null && graph.VariableList.Count > 0
+                ? graph.VariableList[0]?.name ?? string.Empty
                 : string.Empty;
 
             conditionProp.FindPropertyRelative("variableName").stringValue = defaultName;
-            var variableDef = graph?.FindVariable(defaultName);
+            var variableDef = graph?.FindBlackBoardVariable(defaultName);
             var defaultType = variableDef != null
                 ? DialogueConditionEditorUtility.GetConditionOptions(variableDef.variableType)[0]
                 : ECondition.None;
             conditionProp.FindPropertyRelative("eCondition").intValue = (int)defaultType;
         }
 
-        static int FindChoiceIndex(DialogueNode node, DialogueTransition choice)
+        static int FindChoiceIndex(DialogueNodeData node, DialogueTransLineData choice)
         {
             if (node?.ChoiceList == null || choice == null)
                 return -1;
