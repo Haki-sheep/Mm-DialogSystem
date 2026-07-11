@@ -1,10 +1,38 @@
-# M Dialog System
+# M Dialog & Quest System
 
-Unity 节点式对话系统，带可视化 GraphView 编辑器，支持分支条件、图变量与 JSON 导入导出。
+Unity 叙事子系统：节点式对话 + 任务进度，通过事件总线解耦联动。
 
-- **Unity 版本**：2022.3.53f1c1
-- **命名空间**：`Miemie.DialogSystem`
+- **Unity**：2022.3.53f1c1
+- **命名空间**：`Miemie.DialogSystem` / `Miemie.DialogSystem.Quest`
 - **仓库**：https://github.com/Haki-sheep/M_DialogSystem
+
+---
+
+## 能做什么
+
+### 对话系统
+
+- GraphView 可视化编辑对话图（节点 / 选项 / 条件连线）
+- 图级变量（Float / Int / Bool）驱动分支
+- 选项 `eventKey` 与整图结束信号，供任务等外部系统订阅
+- JSON 导入导出
+- MVVM：`DialogueRunner` + `DialogueViewModel` + `StandDialogView`
+- 跨模块服务 `IDialogueCrossService`（播放指定对话图）
+
+### 任务系统
+
+- 配置侧 `QuestData` SO：目标组、前置任务、接取模式、限时
+- 目标类型：对话 / 击杀 / 收集 / 到达
+- 运行时：接受 → 推进 → 提交 / 失败；系统派发与手动接取
+- 玩法事件进、任务生命周期事件出（`NarrativeEventBus`）
+- 任务专属逻辑：`IQuestBehaviour` 虚方法（`OnAccepted` 等）
+- 存档读写、限时失败
+- 编辑器配置页 + Play 模式 GM（模拟击杀/对话、强制提交等）
+
+### 二者如何联动
+
+对话选项选中或整图结束时发布 `DialogueTriggered(graph, eventKey)`。  
+任务目标配置为「对话」类型时，匹配同一张 `DialogueGraph` + `dialogueEventKey`（默认 `GraphFinished`）即可推进。
 
 ---
 
@@ -12,210 +40,151 @@ Unity 节点式对话系统，带可视化 GraphView 编辑器，支持分支条
 
 | 依赖 | 用途 |
 |------|------|
-| [Odin Inspector](https://odininspector.com/) | 编辑器菜单树、字典序列化、`DialogueRunner` 继承 `SerializedMonoBehaviour` |
-| Newtonsoft.Json (`com.unity.nuget.newtonsoft-json`) | 对话图 JSON 导入导出 |
+| [Odin Inspector](https://odininspector.com/) | 编辑器菜单树、部分序列化 |
+| Newtonsoft.Json | 对话图 JSON |
+| UniTask | 异步（限时等） |
+| `com.hakisheep.mm-mvvm` | MVVM / Cross 业务模块 |
+| `com.hakisheep.mm-eventbus` | 类型安全事件总线 |
 
 ---
 
-## 快速开始
+## 目录结构
 
-### 1. 打开编辑器
+```
+Assets/Narrative/
+├── DialogSystem/
+│   ├── Demo/                 # 示例场景与演示图
+│   ├── NodeSo/               # 对话图 SO + 布局资产
+│   ├── Export/               # JSON 导出目录
+│   ├── UIPrefab/             # 立绘对话面板预制体
+│   └── Scripts/
+│       ├── MonoRunner/       # DialogueRunner 入口
+│       ├── MVVM/
+│       │   ├── Model/        # Graph / Node / 跳转 / 条件 / 变量
+│       │   ├── ViewModel/    # DialogueViewModel
+│       │   ├── View/         # StandDialogView
+│       │   └── Cross/        # DialogueCrossService
+│       └── Editor/           # GraphView 窗口与工具
+├── QuestSystem/
+│   ├── QuestSo/              # 任务配置 SO
+│   ├── NarrativeEvent/       # EventBus 封装与 EventKey
+│   ├── MonoRunner/           # QuestManager（partial）
+│   ├── MVVM/
+│   │   ├── Model/            # 配置 / 运行时 / 存档
+│   │   └── Cross/            # QuestCrossService
+│   └── Editor/               # MmQuestWindow + GM 模拟
+└── GraphViewFrame/           # 对话编辑器共用框架（面板布局等）
+```
+
+---
+
+## 对话系统 · 使用
+
+### 打开编辑器
 
 菜单：**Tools → MmDialogWindow**
 
-### 2. 创建对话图
+### 编辑
 
-工具栏点击 **新建对话图**，资产保存在 `Assets/DialogSystem/NodeSo/`。
+1. **新建对话图**（默认落在 `Assets/Narrative/DialogSystem/NodeSo/`）
+2. 画布右键创建节点，拖拽 Out / 选项口连线
+3. 点连线编条件；点节点编台词与是否选项节点
+4. 左侧 Variables 定义图变量
+5. 选项跳转可填 `eventKey`（给任务用）
+6. **Ctrl+S** 保存；工具栏 `*` 表示未保存
 
-### 3. 编辑对话
+### 运行时
 
-1. 左侧选中一张 **对话图**
-2. 画布空白处右键 **创建节点**
-3. 拖拽 **Out / 选项口** 连线
-4. 点击连线编辑 **条件**；点击节点编辑 **台词、选项**
-5. 左侧 **Variables** 面板添加图级变量（Float / Int / Bool）
-6. **Ctrl+S** 保存；工具栏右侧 `*` 表示有未保存修改
+1. 场景挂 `DialogueRunner`，指定图与变量黑板
+2. 或通过 `IDialogueCrossService` / `DialogueRunner.PlayGraph` 播放
+3. Demo：`Assets/Narrative/DialogSystem/Demo/DemoScene.unity`
 
-### 4. 运行时测试
+### JSON
 
-1. 场景挂载 `DialogueRunner`（需 `SerializedMonoBehaviour`）
-2. 指定 `dialogueGraph` 与 `variables`
-3. 进入 Play：
-   - **空格**：普通节点前进
-   - **数字键 1~9**：选项节点选择
+工具栏 **导出 JSON** / **导入 JSON**（默认目录 `DialogSystem/Export/`）
 
-编辑器 Play 模式下可用工具栏 **播放当前图**（需场景中有 `DialogueRunner`）。
-
-### 5. JSON
-
-- **导出 JSON**：工具栏 → 导出 JSON → `Assets/DialogSystem/Export/`
-- **导入 JSON**：工具栏 → 导入 JSON
-
----
-
-## 编辑器窗口架构
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ 工具栏  新建对话图 | 校验本图 | 导出/导入 JSON | 播放当前图          *    │
-├──────────┬────────────┬────────────────────────────┬─────────────────────┤
-│ 对话图   │ Variables  │        GraphView 画布       │       属性          │
-│ (左栏)   │ (变量栏)   │                             │     (右栏)          │
-├──────────┼────────────┼────────────────────────────┼─────────────────────┤
-│ OdinMenu │ 图级变量   │ 节点方块 + 连线             │ 节点 / 连线 Inspector│
-│ Tree     │ 定义       │                             │                     │
-└──────────┴────────────┴────────────────────────────┴─────────────────────┘
-```
-
-### 面板 ↔ 代码对应
-
-| 编辑器位置 | 主要类 |
-|-----------|--------|
-| 工具栏 | `DialogueGraphEditorWindow.Toolbar.cs` |
-| 左侧对话图树 | `DialogueGraphEditorWindow.MenuTree.cs` + `DialogueGraphLeftPanel` |
-| Variables 栏 | `DialogueGraphVariablesPanel` + `DialogueGraphVariablesDrawer` |
-| 中间画布 | `DialogueGraphView` + `DialogueNodeView` |
-| 右侧属性 | `DialogueGraphInspectorPanel` + `DialogueNodeInspectorDrawer` / `DialogueTransitionInspectorDrawer` |
-| 节点布局持久化 | `DialogueGraphLayoutStore` → `DialogueGraphLayouts.asset` |
-
-### 画布元素 ↔ 数据类
-
-| 画面上看到的东西 | 数据类 | 挂在哪 |
-|-----------------|--------|--------|
-| 大方块（节点） | `DialogueNode` | `DialogueGraph.nodeList` |
-| 普通节点 `Out` 口 + 连线 | `DialogueTransition` | `DialogueNode.nextTransition` |
-| 选项节点 `选项1/2/3` 口 + 连线 | `DialogueTransition`（带 `labelText`） | `DialogueNode.choiceList` |
-| 连线上的条件 | `DialogueCondition` | `DialogueTransition.conditionList` |
-| 左侧 Variables 一行 | `DialogueVariableDef` | `DialogueGraph.variableList` |
-
-选中 **Transition** 连线 → 右侧显示普通跳转条件。  
-选中 **Option Transition** 连线 → 右侧多一个 **选项文本** 字段（运行时按钮文案）。
-
----
-
-## 代码分层
-
-```
-Assets/DialogSystem/Scripts/
-├── Data/                    # ScriptableObject 与 JSON 模型
-│   ├── DialogueGraph.cs
-│   ├── DialogueNode.cs
-│   ├── DialogueVariableDef.cs
-│   └── DialogueJsonModels.cs
-├── Rumtime/
-│   ├── DialogueRunner.cs    # 运行时驱动（Debug 键盘版）
-│   ├── Condition/
-│   │   ├── DialogueCondition.cs
-│   │   └── DialogueConditionTypes.cs   # ECondition 枚举
-│   ├── Variable/
-│   │   └── DialogueVariablesStore.cs   # 运行时变量（Odin 字典）
-│   ├── Transition/
-│   │   └── DialogueTransition.cs       # 跳转 普通 Out 与选项出口共用
-│   └── SperakTypes/
-│       └── DialogueSpeakEnums.cs
-└── Editor/
-    ├── Window/              # 主窗口 partial
-    ├── Panels/              # 左/变量/属性面板
-    ├── GraphView/           # 画布与节点视图
-    ├── Inspectors/          # IMGUI 属性绘制
-    └── Utils/               # JSON、布局、校验、Editor 专用条件工具
-```
-
-### Data / Runtime / Editor 职责
-
-| 层 | 职责 |
-|----|------|
-| **Data** | 资产结构定义，可被 SO 序列化与 JSON 互转 |
-| **Runtime** | `MeetCondition`、`CanPass`、`GoTo` 等纯运行逻辑 |
-| **Editor** | 可视化编辑、标签显示、`GetDisplayLabel` 等仅编辑器方法 |
-
----
-
-## 条件与变量
-
-### 图变量（声明）
-
-在 **Variables** 面板定义变量名、类型、默认值。  
-对应 `DialogueVariableDef`，对话开始时由 `DialogueVariablesStore.ApplyDefaults` 灌入运行时。
-
-### 连线条件（规则）
-
-在连线上添加 `DialogueCondition`，引用 Variables 里的 `variableName`：
-
-| 变量类型 | 可用条件 |
-|---------|---------|
-| Bool | True / False |
-| Float | 大于 / 小于（不做相等比较） |
-| Int | 大于 / 小于 / 等于 / 不等于 |
-
-### 运行时变量（当前值）
-
-挂在 `DialogueRunner.variables`，Play 后可在 Inspector 查看。  
-游戏中用 `SetBool` / `SetInt` / `SetFloat` 修改，条件判断时读取。
-
-```
-Variables（策划定义） → DialogueVariablesStore（运行时值） → Condition（判断能否走线）
-```
-
----
-
-## 运行时流程
-
-```
-StartDialog()
-  → ApplyDefaults(图变量)
-  → GoTo(startNode)
-       ↓
-  普通节点: Advance() → NextTransition.CanPass → GoTo
-  选项节点: RefreshAvailableChoices() → 筛条件 → SelectOption → GoTo
-```
-
-`availableChoiceList` 是 Runner 内部缓存：**当前真正能选的选项出口**，不是节点上配置的全部 `choiceList`。
-
----
-
-## 资产路径
-
-| 路径 | 内容 |
-|------|------|
-| `Assets/DialogSystem/NodeSo/` | 对话图、节点 SO |
-| `Assets/DialogSystem/NodeSo/DialogueGraphLayouts.asset` | 画布节点坐标 |
-| `Assets/DialogSystem/Export/` | 导出的 JSON |
-| `Assets/DialogSystem/Scene/` | 示例场景 |
-
----
-
-## 快捷键
+### 运行时 Debug 键
 
 | 操作 | 按键 |
 |------|------|
-| 保存当前修改 | Ctrl+S |
-| 普通节点前进（运行时 Debug） | 空格 |
-| 选择选项（运行时 Debug） | 1 ~ 9 |
+| 普通节点前进 | 空格 |
+| 选选项 | 1 ~ 9 |
 
 ---
 
-## 设计参考
+## 任务系统 · 使用
 
-整体思路类似 **Animator 状态机**：
+### 打开编辑器
 
-- `DialogueNode` ≈ State
-- `DialogueTransition` ≈ Transition（带条件，选项时填 `labelText`）
-- `DialogueCondition` ≈ Condition 单条
-- `DialogueVariableDef` ≈ Animator Parameters
-- `DialogueVariablesStore` ≈ 运行时变量当前值
+菜单：**Tools → MmQuestWindow**
+
+- **配置**：新建 / 编辑 `QuestData`（目标、前置、限时等）
+- **GM**（需 Play + 场景有 `QuestManager`）：模拟事件、接受、提交、失败
+
+### 场景接入
+
+1. 挂 `QuestManager`，在 Inspector 把要用的 `QuestData` 拖进 `questList`
+2. 可选：启动时读档 `loadSaveOnStart`
+3. 玩法侧按需发布：
+
+| 事件 | 含义 |
+|------|------|
+| `EnemyKilled(enemyKey, count)` | 击杀 |
+| `ItemCollected(itemKey, count)` | 收集 |
+| `ZoneEntered(zoneKey)` | 到达 |
+| `DialogueTriggered(graph, eventKey)` | 对话信号（对话系统会发） |
+
+4. 外部可订阅：`QuestAccepted` / `QuestProgressChanged` / `QuestCompleted` / `QuestFailed`
+5. 跨模块：`IQuestCrossService`（查状态、接取、提交）
+
+### 目标配置要点
+
+- **击杀 / 收集 / 到达**：填 `targetKey`，与玩法事件 Key 一致
+- **对话**：拖 `dialogueGraph`，填 `dialogueEventKey`（整图结束用 `GraphFinished`，或选项上的 `eventKey`）
+
+### 公开 API（节选）
+
+```csharp
+QuestManager.Instance.Accept(questId);
+QuestManager.Instance.TrySubmit(questId);
+QuestManager.Instance.Fail(questId);
+QuestManager.Instance.GetState(questId);
+QuestManager.Instance.SaveQuests();
+QuestManager.Instance.LoadQuests();
+```
 
 ---
 
-## 后续可扩展
+## 事件 Key 一览
 
-- [ ] `DialogueRunner` 事件驱动 UI（OnNodeEntered / OnChoicesReady）
-- [ ] 台词库 lineId + DialogueBank
-- [ ] 节点 OnEnter / OnExit 回调
-- [ ] Runtime / Editor 程序集拆分（asmdef）
+定义在 `Assets/Narrative/QuestSystem/NarrativeEvent/NarrativeEventKeys.cs`。
+
+**玩法 → 任务**：`EnemyKilled` / `ItemCollected` / `ZoneEntered` / `DialogueTriggered`  
+**任务 → 外部**：`QuestAccepted` / `QuestProgressChanged` / `QuestCompleted` / `QuestFailed`  
+**对话结束约定**：`DialogueGraphFinishedKey = "GraphFinished"`
+
+---
+
+## 架构简述
+
+```
+玩法 / 对话
+    │ Publish(Inbound Keys)
+    ▼
+NarrativeEventBus
+    │
+    ├─► QuestManager（订阅玩法事件 → 推进 activeQuestList）
+    │       │ Publish(Outbound Keys) + QuestData.OnXxx(context)
+    │       ▼
+    │   UI / 成就 / 关卡逻辑 …
+    │
+    └─► DialogueViewModel（播图、发 DialogueTriggered）
+```
+
+配置（SO）与运行时状态分离；任务存档只存 id / 状态 / 进度 / 限时，不重复存配置正文。
 
 ---
 
 ## License
 
-本项目为学习与个人项目用途，第三方插件（Odin、DOTween 等）请遵循各自授权协议。
+学习与个人项目用途。Odin、第三方包请遵循各自授权。
